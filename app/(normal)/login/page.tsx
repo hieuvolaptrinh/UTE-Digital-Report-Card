@@ -13,19 +13,23 @@ import {
   ArrowRight,
   Shield,
   Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ModeToggle } from "@/components/toggle.theme";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { login } from "@/mork-data";
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string>("");
   const [formData, setFormData] = React.useState({
-    email: "",
+    username: "",
     password: "",
     remember: false,
   });
@@ -33,12 +37,47 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Mock login - replace with actual authentication
-    setTimeout(() => {
+    try {
+      // Use mock authentication
+      const user = login(formData.username, formData.password);
+
+      if (!user) {
+        setError("Tên đăng nhập hoặc mật khẩu không chính xác");
+        setIsLoading(false);
+        return;
+      }
+
+      // Store user info (in real app, use proper session management)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
+      // Redirect based on role
+      setTimeout(() => {
+        setIsLoading(false);
+        switch (user.role) {
+          case "student":
+            router.push("/student");
+            break;
+          case "teacher":
+            router.push("/teacher");
+            break;
+          case "parent":
+            router.push("/parent");
+            break;
+          case "principal":
+            router.push("/teacher"); // Principal uses teacher layout
+            break;
+          default:
+            router.push("/");
+        }
+      }, 800);
+    } catch {
+      setError("Có lỗi xảy ra, vui lòng thử lại");
       setIsLoading(false);
-      router.push("/student");
-    }, 1500);
+    }
   };
 
   const handleChange = (field: string, value: string | boolean) => {
@@ -148,20 +187,31 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <Alert
+                variant="destructive"
+                className="backdrop-blur-sm bg-destructive/10"
+              >
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-4">
-              {/* Email */}
+              {/* Username */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  Email hoặc mã số
+                <Label htmlFor="username" className="text-sm font-medium">
+                  Tên đăng nhập
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="email"
+                    id="username"
                     type="text"
-                    placeholder="student@hcmute.edu.vn"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
+                    placeholder="HS001"
+                    value={formData.username}
+                    onChange={(e) => handleChange("username", e.target.value)}
                     className="pl-10 h-11 bg-background/50 backdrop-blur-sm border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                     required
                   />
