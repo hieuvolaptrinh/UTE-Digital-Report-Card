@@ -40,6 +40,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 // Types
 export type UserRole =
@@ -175,7 +176,7 @@ export function Header({ user, onLogout, className }: HeaderProps) {
               className="relative h-10 w-10 rounded-lg bg-primary/10 p-1.5 ring-1 ring-primary/20"
             >
               <div className="h-full w-full flex items-center justify-center">
-                <BookOpen className="h-6 w-6 text-primary" />
+                <img src={"/UTE.png"} />
               </div>
             </motion.div>
             <div className="hidden flex-col sm:flex">

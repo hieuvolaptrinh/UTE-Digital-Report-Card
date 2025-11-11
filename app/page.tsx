@@ -1,11 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   Card,
   CardContent,
@@ -21,7 +23,11 @@ import {
   ArrowRight,
   GraduationCap,
   FileText,
+  Award,
+  Trophy,
+  Target,
 } from "lucide-react";
+import { schoolInfo } from "@/mork-data";
 
 export default function HomePage() {
   return (

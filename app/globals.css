@@ -75,6 +75,12 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.712 0.194 13.428);
+
+  /* Glassmorphism Variables */
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  --glass-blur: 6px;
 }
 
 .dark {
@@ -109,6 +115,11 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.41 0.159 10.272);
+
+  /* Glassmorphism Variables - Dark Mode */
+  --glass-bg: rgba(0, 0, 0, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 @layer base {

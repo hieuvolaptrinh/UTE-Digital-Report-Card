@@ -21,10 +21,11 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ModeToggle } from "@/components/toggle.theme";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { login } from "@/mork-data";
+import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login: authLogin, user } = useAuth();
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string>("");
@@ -34,46 +35,44 @@ export default function LoginPage() {
     remember: false,
   });
 
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      switch (user.role) {
+        case "student":
+          router.push("/student");
+          break;
+        case "teacher":
+          router.push("/teacher");
+          break;
+        case "parent":
+          router.push("/parent");
+          break;
+        case "principal":
+          router.push("/teacher/principal");
+          break;
+        default:
+          router.push("/");
+      }
+    }
+  }, [user, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      // Use mock authentication
-      const user = login(formData.username, formData.password);
+      const success = await authLogin(formData.username, formData.password);
 
-      if (!user) {
+      if (!success) {
         setError("Tên đăng nhập hoặc mật khẩu không chính xác");
         setIsLoading(false);
         return;
       }
 
-      // Store user info (in real app, use proper session management)
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(user));
-      }
-
-      // Redirect based on role
-      setTimeout(() => {
-        setIsLoading(false);
-        switch (user.role) {
-          case "student":
-            router.push("/student");
-            break;
-          case "teacher":
-            router.push("/teacher");
-            break;
-          case "parent":
-            router.push("/parent");
-            break;
-          case "principal":
-            router.push("/teacher"); // Principal uses teacher layout
-            break;
-          default:
-            router.push("/");
-        }
-      }, 800);
+      // Auth context will handle user storage and the useEffect will redirect
+      setIsLoading(false);
     } catch {
       setError("Có lỗi xảy ra, vui lòng thử lại");
       setIsLoading(false);
