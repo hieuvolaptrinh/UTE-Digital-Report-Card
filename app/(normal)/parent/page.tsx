@@ -127,13 +127,19 @@ export default function ParentPage() {
               <h3 className="text-lg font-semibold mb-4">Truy cập nhanh</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <Link href="/parent/xin-vang-hoc">
-                  <Button variant="outline" className="w-full gap-2 h-auto py-3">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 h-auto py-3"
+                  >
                     <FileText className="h-4 w-4" />
                     <span className="text-sm">Xin nghỉ học</span>
                   </Button>
                 </Link>
                 <Link href="/parent/notification">
-                  <Button variant="outline" className="w-full gap-2 h-auto py-3">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 h-auto py-3"
+                  >
                     <Bell className="h-4 w-4" />
                     <span className="text-sm">Thông báo</span>
                   </Button>

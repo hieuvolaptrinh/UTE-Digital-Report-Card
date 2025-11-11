@@ -4,7 +4,13 @@
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, AlertCircle, BookOpen, Calendar, MessageSquare } from "lucide-react";
+import {
+  Bell,
+  AlertCircle,
+  BookOpen,
+  Calendar,
+  MessageSquare,
+} from "lucide-react";
 import { Notification } from "@/mork-data";
 
 interface NotificationsListProps {
@@ -38,7 +44,7 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
           {notifications.filter((n) => !n.isRead).length} mới
         </Badge>
       </div>
-      
+
       <div className="space-y-3">
         {notifications.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -49,7 +55,7 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
           notifications.map((notif, index) => {
             const Icon = notificationIcons[notif.type];
             const colorClass = notificationColors[notif.type];
-            
+
             return (
               <motion.div
                 key={notif.id}
@@ -59,7 +65,9 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
                 className="p-4 rounded-lg hover:bg-white/5 dark:hover:bg-black/5 cursor-pointer transition-colors border border-white/10"
               >
                 <div className="flex gap-3">
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}>
+                  <div
+                    className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}
+                  >
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -85,7 +93,10 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
                       {notif.isImportant && (
                         <>
                           <span>•</span>
-                          <Badge variant="destructive" className="text-xs px-1 py-0">
+                          <Badge
+                            variant="destructive"
+                            className="text-xs px-1 py-0"
+                          >
                             Quan trọng
                           </Badge>
                         </>

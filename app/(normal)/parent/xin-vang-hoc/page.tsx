@@ -74,9 +74,7 @@ export default function LeaveRequestPage() {
                 <FileText className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold">
-                  Xin nghỉ học
-                </h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">Xin nghỉ học</h1>
                 <p className="text-muted-foreground mt-1">
                   Gửi đơn xin nghỉ học cho con em
                 </p>
@@ -165,9 +163,7 @@ export default function LeaveRequestPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary">•</span>
-                    <span>
-                      Nêu rõ lý do và thời gian nghỉ học cụ thể
-                    </span>
+                    <span>Nêu rõ lý do và thời gian nghỉ học cụ thể</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary">•</span>
@@ -177,15 +173,11 @@ export default function LeaveRequestPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary">•</span>
-                    <span>
-                      Học sinh cần bù bài tập khi trở lại học
-                    </span>
+                    <span>Học sinh cần bù bài tập khi trở lại học</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary">•</span>
-                    <span>
-                      Nghỉ học quá 3 ngày liên tục cần giấy xác nhận
-                    </span>
+                    <span>Nghỉ học quá 3 ngày liên tục cần giấy xác nhận</span>
                   </li>
                 </ul>
               </GlassCard>
