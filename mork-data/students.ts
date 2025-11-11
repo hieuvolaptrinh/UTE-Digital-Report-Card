@@ -207,14 +207,19 @@ export const mockStudentDetails12A2: StudentDetail[] = [
 ];
 
 // All students combined
-export const allMockStudents = [...mockStudentDetails, ...mockStudentDetails12A2];
+export const allMockStudents = [
+  ...mockStudentDetails,
+  ...mockStudentDetails12A2,
+];
 
-// Helper function to get students by class
-export const getStudentsByClass = (className: string): StudentDetail[] => {
+// Helper function to get student details by class
+export const getStudentDetailsByClass = (className: string): StudentDetail[] => {
   return allMockStudents.filter((student) => student.class === className);
 };
 
-// Helper function to get student by ID
-export const getStudentById = (studentId: string): StudentDetail | undefined => {
+// Helper function to get student detail by ID
+export const getStudentById = (
+  studentId: string
+): StudentDetail | undefined => {
   return allMockStudents.find((student) => student.studentId === studentId);
 };
