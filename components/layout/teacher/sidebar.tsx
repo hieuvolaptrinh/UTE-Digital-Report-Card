@@ -8,7 +8,6 @@ import {
   BookOpen,
   Calendar,
   Users,
-  ClipboardList,
   FileText,
   MessageSquare,
   Home,
@@ -78,12 +77,19 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
       icon: Users,
       children: [
         { label: "Danh sách lớp", href: "/teacher/classes", icon: FolderOpen },
-        { label: "Học sinh", href: "/teacher/classes/students", icon: GraduationCap },
+        {
+          label: "Học sinh",
+          href: "/teacher/classes/students",
+          icon: GraduationCap,
+        },
       ],
     },
-    { label: "Nhập điểm", href: "/teacher/grades", icon: ClipboardList },
-    { label: "Hạnh kiểm", href: "/teacher/conduct", icon: FileText },
-    { label: "Gửi thông báo", href: "/teacher/notifications", icon: MessageSquare, badge: 3 },
+    {
+      label: "Gửi thông báo",
+      href: "/teacher/gui-thong-bao",
+      icon: MessageSquare,
+      badge: 3,
+    },
   ];
 
   const principalItems: SidebarItem[] = [
@@ -156,31 +162,35 @@ function SidebarNav({
                   )}
                 </button>
                 <AnimatePresence>
-                  {isExpanded && (!collapsed || mobileOpen) && item.children && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="ml-4 mt-1 space-y-1 overflow-hidden"
-                    >
-                      {item.children.map((child) => (
-                        <Link key={child.href} href={child.href}>
-                          <button
-                            className={cn(
-                              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",
-                              isActive(child.href)
-                                ? "bg-primary/10 text-primary font-medium"
-                                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                            )}
-                          >
-                            <child.icon className="h-4 w-4 shrink-0" />
-                            <span className="flex-1 text-left">{child.label}</span>
-                          </button>
-                        </Link>
-                      ))}
-                    </motion.div>
-                  )}
+                  {isExpanded &&
+                    (!collapsed || mobileOpen) &&
+                    item.children && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="ml-4 mt-1 space-y-1 overflow-hidden"
+                      >
+                        {item.children.map((child) => (
+                          <Link key={child.href} href={child.href}>
+                            <button
+                              className={cn(
+                                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",
+                                isActive(child.href)
+                                  ? "bg-primary/10 text-primary font-medium"
+                                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                              )}
+                            >
+                              <child.icon className="h-4 w-4 shrink-0" />
+                              <span className="flex-1 text-left">
+                                {child.label}
+                              </span>
+                            </button>
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
                 </AnimatePresence>
               </>
             ) : (
@@ -217,7 +227,11 @@ function SidebarNav({
   );
 }
 
-export function TeacherSidebar({ user, onLogout, className }: TeacherSidebarProps) {
+export function TeacherSidebar({
+  user,
+  onLogout,
+  className,
+}: TeacherSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -227,7 +241,9 @@ export function TeacherSidebar({ user, onLogout, className }: TeacherSidebarProp
 
   const toggleExpanded = (href: string) => {
     setExpandedItems((prev) =>
-      prev.includes(href) ? prev.filter((item) => item !== href) : [...prev, href]
+      prev.includes(href)
+        ? prev.filter((item) => item !== href)
+        : [...prev, href]
     );
   };
 
@@ -250,7 +266,9 @@ export function TeacherSidebar({ user, onLogout, className }: TeacherSidebarProp
           </motion.div>
           {(!collapsed || mobileOpen) && (
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-foreground">UTE Digital</span>
+              <span className="text-sm font-bold text-foreground">
+                UTE Digital
+              </span>
               <span className="text-xs text-muted-foreground">Quản lý</span>
             </div>
           )}
@@ -262,7 +280,11 @@ export function TeacherSidebar({ user, onLogout, className }: TeacherSidebarProp
             className="h-8 w-8 hidden lg:flex"
             onClick={() => setCollapsed(!collapsed)}
           >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </Button>
         )}
       </div>
@@ -283,8 +305,12 @@ export function TeacherSidebar({ user, onLogout, className }: TeacherSidebarProp
           </Avatar>
           {(!collapsed || mobileOpen) && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{user.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              <p className="text-sm font-semibold text-foreground truncate">
+                {user.name}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user.email}
+              </p>
               <Badge
                 variant="secondary"
                 className="mt-1 text-xs capitalize bg-primary/10 text-primary border-0"
@@ -381,11 +407,19 @@ export function TeacherSidebar({ user, onLogout, className }: TeacherSidebarProp
                     <BookOpen className="h-full w-full text-primary" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-foreground">UTE Digital</span>
-                    <span className="text-xs text-muted-foreground">Quản lý</span>
+                    <span className="text-sm font-bold text-foreground">
+                      UTE Digital
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Quản lý
+                    </span>
                   </div>
                 </Link>
-                <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileOpen(false)}
+                >
                   <X className="h-5 w-5" />
                 </Button>
               </div>

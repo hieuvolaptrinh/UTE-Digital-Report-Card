@@ -1,426 +1,173 @@
-"use client";
+﻿"use client";
 
-import * as React from "react";
-import { motion } from "motion/react";
-import {
-  Calendar,
-  Users,
-  ClipboardList,
-  TrendingUp,
-  Bell,
-  CheckCircle,
-  AlertCircle,
-} from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useAuth, isTeacher } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
+import { GlassCard } from "@/components/ui/glass-card";
+import { StatCard } from "@/components/shared/stat-card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { mockSchedule, mockGradeEditRequests, allMockStudents } from "@/mork-data";
 import Link from "next/link";
+import { 
+  Calendar, 
+  ClipboardList, 
+  Users, 
+  Bell, 
+  BookOpen, 
+  MessageSquare, 
+  FileText, 
+  TrendingUp,
+  GraduationCap
+} from "lucide-react";
 
 export default function TeacherPage() {
+  const { user, isLoading, logout } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && (!user || !isTeacher(user))) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user || !isTeacher(user)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const headerUser = {
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    role: user.role as any,
+  };
+
+  const teacherSchedule = mockSchedule.filter(s => s.teacherId === user.teacherId);
+  const pending = mockGradeEditRequests.filter(r => r.status === "pending").length;
+  const homeRoomStudents = user.homeRoomClass 
+    ? allMockStudents.filter(s => s.class === user.homeRoomClass).length 
+    : 0;
+
   return (
-    <div className="min-h-screen p-6 lg:p-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-7xl mx-auto space-y-8"
-      >
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Tổng quan</h1>
-          <p className="text-muted-foreground mt-2">
-            Chào mừng bạn đến với bảng điều khiển giáo viên
+    <>
+      <Header user={headerUser} onLogout={logout} />
+      <main className="min-h-screen bg-linear-to-br from-orange-50 via-white to-yellow-50">
+        <div className="container mx-auto px-4 py-6">
+          <h1 className="text-3xl font-bold mb-2">Dashboard Giáo viên</h1>
+          <p className="text-muted-foreground mb-8">
+            Xin chào, {user.name}!
           </p>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            {
-              label: "Lớp chủ nhiệm",
-              value: "10A1",
-              icon: Users,
-              color: "text-blue-500",
-              bgColor: "bg-blue-500/10",
-            },
-            {
-              label: "Số học sinh",
-              value: "42",
-              icon: Users,
-              color: "text-green-500",
-              bgColor: "bg-green-500/10",
-            },
-            {
-              label: "Tiết dạy tuần này",
-              value: "24",
-              icon: Calendar,
-              color: "text-purple-500",
-              bgColor: "bg-purple-500/10",
-            },
-            {
-              label: "Chưa nhập điểm",
-              value: "3",
-              icon: ClipboardList,
-              color: "text-orange-500",
-              bgColor: "bg-orange-500/10",
-            },
-          ].map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
-            >
-              <Card className="border-border/40 hover:border-primary/20 transition-colors">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        {stat.label}
-                      </p>
-                      <p className="text-3xl font-bold text-foreground">
-                        {stat.value}
-                      </p>
-                    </div>
-                    <div
-                      className={`${stat.bgColor} ${stat.color} p-3 rounded-xl`}
-                    >
-                      <stat.icon className="h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <StatCard
+              label="Lớp giảng dạy"
+              value={user.classes.length.toString()}
+              icon={BookOpen}
+              color="blue"
+            />
+            <StatCard
+              label="HS lớp chủ nhiệm"
+              value={homeRoomStudents.toString()}
+              icon={GraduationCap}
+              color="green"
+            />
+            <StatCard
+              label="Tiết dạy/tuần"
+              value={teacherSchedule.length.toString()}
+              icon={Calendar}
+              color="purple"
+            />
+            <StatCard
+              label="YC chờ duyệt"
+              value={pending.toString()}
+              icon={Bell}
+              color="orange"
+            />
+          </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Schedule Today */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              <Card className="border-border/40">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold mb-4">Truy cập nhanh</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {user.homeRoomClass && (
+              <Link href="/teacher/homeroom-teacher">
+                <GlassCard padding="md" className="hover:scale-105 transition-transform cursor-pointer h-full">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-green-500/10">
+                      <Users className="h-6 w-6 text-green-500" />
+                    </div>
                     <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-primary" />
-                        Lịch dạy hôm nay
-                      </CardTitle>
-                      <CardDescription>
-                        Thứ Hai, 11 Tháng 11, 2025
-                      </CardDescription>
+                      <h3 className="font-semibold">Lớp chủ nhiệm</h3>
+                      <p className="text-sm text-muted-foreground">{user.homeRoomClass}</p>
                     </div>
-                    <Link href="/teacher/schedule">
-                      <Button variant="outline" size="sm">
-                        Xem tất cả
-                      </Button>
-                    </Link>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[
-                    {
-                      time: "07:00 - 08:00",
-                      class: "10A1",
-                      subject: "Toán",
-                      room: "A201",
-                    },
-                    {
-                      time: "08:15 - 09:15",
-                      class: "11A2",
-                      subject: "Toán",
-                      room: "B105",
-                    },
-                    {
-                      time: "09:30 - 10:30",
-                      class: "10A1",
-                      subject: "Toán",
-                      room: "A201",
-                    },
-                  ].map((lesson, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="shrink-0 w-24 text-sm font-medium text-muted-foreground">
-                        {lesson.time}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-foreground">
-                          {lesson.subject}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Lớp {lesson.class} • Phòng {lesson.room}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="shrink-0">
-                        Sắp diễn ra
-                      </Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </motion.div>
+                </GlassCard>
+              </Link>
+            )}
 
-            {/* Recent Classes */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              <Card className="border-border/40">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    Lớp học của tôi
-                  </CardTitle>
-                  <CardDescription>
-                    Danh sách các lớp đang giảng dạy
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[
-                    {
-                      name: "10A1",
-                      students: 42,
-                      subject: "Toán",
-                      progress: 75,
-                    },
-                    {
-                      name: "11A2",
-                      students: 38,
-                      subject: "Toán",
-                      progress: 60,
-                    },
-                    {
-                      name: "12A3",
-                      students: 40,
-                      subject: "Toán",
-                      progress: 85,
-                    },
-                  ].map((classItem, index) => (
-                    <div
-                      key={index}
-                      className="p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-foreground">
-                            Lớp {classItem.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {classItem.students} học sinh • {classItem.subject}
-                          </p>
-                        </div>
-                        <Link href={`/teacher/classes/${classItem.name}`}>
-                          <Button size="sm" variant="outline">
-                            Xem chi tiết
-                          </Button>
-                        </Link>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">
-                            Tiến độ giảng dạy
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {classItem.progress}%
-                          </span>
-                        </div>
-                        <Progress value={classItem.progress} className="h-2" />
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </motion.div>
+            <Link href="/teacher/class">
+              <GlassCard padding="md" className="hover:scale-105 transition-transform cursor-pointer h-full">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-blue-500/10">
+                    <BookOpen className="h-6 w-6 text-blue-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Lớp giảng dạy</h3>
+                    <p className="text-sm text-muted-foreground">Xem điểm</p>
+                  </div>
+                </div>
+              </GlassCard>
+            </Link>
+
+            <Link href="/teacher/nhap-diem">
+              <GlassCard padding="md" className="hover:scale-105 transition-transform cursor-pointer h-full">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-purple-500/10">
+                    <ClipboardList className="h-6 w-6 text-purple-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Nhập điểm</h3>
+                    <p className="text-sm text-muted-foreground">Quản lý điểm</p>
+                  </div>
+                </div>
+              </GlassCard>
+            </Link>
+
+            <Link href="/teacher/hanh-kiem">
+              <GlassCard padding="md" className="hover:scale-105 transition-transform cursor-pointer h-full">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-orange-500/10">
+                    <FileText className="h-6 w-6 text-orange-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Hạnh kiểm</h3>
+                    <p className="text-sm text-muted-foreground">Đánh giá</p>
+                  </div>
+                </div>
+              </GlassCard>
+            </Link>
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-            >
-              <Card className="border-border/40">
-                <CardHeader>
-                  <CardTitle className="text-base">Thao tác nhanh</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {[
-                    {
-                      label: "Nhập điểm",
-                      icon: ClipboardList,
-                      href: "/teacher/grades",
-                      color: "text-blue-500",
-                    },
-                    {
-                      label: "Nhập hạnh kiểm",
-                      icon: CheckCircle,
-                      href: "/teacher/conduct",
-                      color: "text-green-500",
-                    },
-                    {
-                      label: "Gửi thông báo",
-                      icon: Bell,
-                      href: "/teacher/notifications",
-                      color: "text-purple-500",
-                    },
-                    {
-                      label: "Xem thời khóa biểu",
-                      icon: Calendar,
-                      href: "/teacher/schedule",
-                      color: "text-orange-500",
-                    },
-                  ].map((action, index) => (
-                    <Link key={index} href={action.href}>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-3 h-12"
-                      >
-                        <action.icon className={`h-5 w-5 ${action.color}`} />
-                        <span>{action.label}</span>
-                      </Button>
-                    </Link>
-                  ))}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Notifications */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              <Card className="border-border/40">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Bell className="h-4 w-4 text-primary" />
-                    Thông báo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[
-                    {
-                      title: "Nhắc nhở nhập điểm",
-                      desc: "Còn 3 lớp chưa nhập điểm giữa kỳ",
-                      time: "2 giờ trước",
-                      type: "warning",
-                    },
-                    {
-                      title: "Họp phụ huynh",
-                      desc: "Lớp 10A1 - 15:00 ngày mai",
-                      time: "5 giờ trước",
-                      type: "info",
-                    },
-                    {
-                      title: "Hoàn thành báo cáo",
-                      desc: "Báo cáo tháng 10 đã được duyệt",
-                      time: "1 ngày trước",
-                      type: "success",
-                    },
-                  ].map((notif, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                    >
-                      <div
-                        className={`mt-0.5 ${
-                          notif.type === "warning"
-                            ? "text-orange-500"
-                            : notif.type === "info"
-                            ? "text-blue-500"
-                            : "text-green-500"
-                        }`}
-                      >
-                        {notif.type === "warning" ? (
-                          <AlertCircle className="h-4 w-4" />
-                        ) : notif.type === "info" ? (
-                          <Bell className="h-4 w-4" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {notif.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {notif.desc}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {notif.time}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.9 }}
-            >
-              <Card className="border-border/40">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    Thống kê
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Điểm trung bình lớp
-                      </span>
-                      <span className="font-semibold text-foreground">7.8</span>
-                    </div>
-                    <Progress value={78} className="h-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Tỷ lệ hoàn thành bài tập
-                      </span>
-                      <span className="font-semibold text-foreground">92%</span>
-                    </div>
-                    <Progress value={92} className="h-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Tỷ lệ tham gia lớp
-                      </span>
-                      <span className="font-semibold text-foreground">95%</span>
-                    </div>
-                    <Progress value={95} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+          <GlassCard padding="lg">
+            <h2 className="text-xl font-semibold mb-4">Thông tin</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Môn giảng dạy</h3>
+                <Badge className="text-lg px-4 py-2">{user.subject || "N/A"}</Badge>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Lớp chủ nhiệm</h3>
+                <Badge className="text-lg px-4 py-2">{user.homeRoomClass || "Không"}</Badge>
+              </div>
+            </div>
+          </GlassCard>
         </div>
-      </motion.div>
-    </div>
+      </main>
+      <Footer />
+    </>
   );
 }

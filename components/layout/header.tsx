@@ -89,15 +89,10 @@ const navigationConfig: NavItem[] = [
       "guest",
     ],
   },
+  // Student navigation
   {
-    label: "Thông báo",
-    href: "/notifications",
-    icon: Bell,
-    roles: ["student", "teacher", "principal", "academic-officer", "parent"],
-  },
-  {
-    label: "Kết quả học tập",
-    href: "/student/grades",
+    label: "Bảng điểm",
+    href: "/student",
     icon: BookOpen,
     roles: ["student"],
   },
@@ -113,20 +108,73 @@ const navigationConfig: NavItem[] = [
     icon: FileText,
     roles: ["student"],
   },
+  // Parent navigation
   {
-    label: "Giáo viên",
+    label: "Thông tin con em",
+    href: "/parent",
+    icon: Users,
+    roles: ["parent"],
+  },
+  {
+    label: "Thông báo",
+    href: "/parent/notification",
+    icon: Bell,
+    roles: ["parent"],
+  },
+  {
+    label: "Xin vắng học",
+    href: "/parent/xin-vang-hoc",
+    icon: FileText,
+    roles: ["parent"],
+  },
+  // Teacher navigation
+  {
+    label: "Giảng dạy",
     href: "/teacher",
     icon: LayoutDashboard,
-    roles: ["teacher", "principal", "academic-officer"],
+    roles: ["teacher"],
     children: [
       { label: "Thời khóa biểu", href: "/teacher/schedule", icon: Calendar },
-      { label: "Quản lý lớp", href: "/teacher/classes", icon: Users },
-      { label: "Nhập điểm", href: "/teacher/grades", icon: ClipboardList },
-      { label: "Hạnh kiểm", href: "/teacher/conduct", icon: FileText },
+      { label: "Nhập điểm", href: "/teacher/nhap-diem", icon: ClipboardList },
+      { label: "Nhập hạnh kiểm", href: "/teacher/hanh-kiem", icon: FileText },
       {
         label: "Gửi thông báo",
-        href: "/teacher/notifications",
+        href: "/teacher/gui-thong-bao",
         icon: MessageSquare,
+      },
+      {
+        label: "Yêu cầu sửa điểm",
+        href: "/teacher/yeu-cau-sua-diem",
+        icon: Bell,
+      },
+    ],
+  },
+  // Principal navigation
+  {
+    label: "Ban giám hiệu",
+    href: "/teacher/principal",
+    icon: Settings,
+    roles: ["principal"],
+    children: [
+      {
+        label: "Thống kê tổng quan",
+        href: "/teacher/principal",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "Quản lý giáo viên",
+        href: "/teacher/principal/teachers",
+        icon: Users,
+      },
+      {
+        label: "Phê duyệt sửa điểm",
+        href: "/teacher/principal/list-sua-diem",
+        icon: ClipboardList,
+      },
+      {
+        label: "Báo cáo học tập",
+        href: "/teacher/principal/reports",
+        icon: FileText,
       },
     ],
   },
