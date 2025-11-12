@@ -31,7 +31,7 @@ export default function ConductPage() {
     name: user.name,
     email: user.email,
     avatar: user.avatar,
-    role: user.role as any,
+    role: user.role as "teacher" | "academic-officer" | "principal",
   };
 
   return (

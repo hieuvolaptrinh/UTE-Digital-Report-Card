@@ -20,6 +20,11 @@ import {
   BarChart3,
   UserCog,
   FileText,
+  School,
+  GraduationCap,
+  ClipboardList,
+  TrendingUp,
+  FolderOpen,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -65,7 +70,7 @@ export interface TeacherSidebarProps {
 
 // Sidebar navigation configuration
 const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
-  // Teacher items
+  // Common teacher items
   const teacherItems: SidebarItem[] = [
     {
       label: "Tổng quan",
@@ -111,31 +116,57 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
     },
   ];
 
-  // Principal exclusive items
+  // Principal management items
   const principalItems: SidebarItem[] = [
     {
-      label: "Quản lý giáo viên",
-      href: "/teacher/principal/teacher",
-      icon: UserCog,
-      roles: ["principal"],
-    },
-    {
-      label: "Thông báo toàn trường",
-      href: "/teacher/principal/notification",
-      icon: MessageSquare,
-      roles: ["principal"],
-    },
-    {
-      label: "Duyệt yêu cầu sửa điểm",
-      href: "/teacher/principal/list-sua-diem",
-      icon: FileText,
-      roles: ["principal"],
-    },
-    {
-      label: "Báo cáo thống kê",
+      label: "Ban giám hiệu",
       href: "/teacher/principal",
       icon: BarChart3,
       roles: ["principal"],
+      children: [
+        {
+          label: "Báo cáo thống kê",
+          href: "/teacher/principal",
+          icon: TrendingUp,
+          roles: ["principal"],
+        },
+        {
+          label: "Tổng quan trường",
+          href: "/teacher/principal/school-overview",
+          icon: School,
+          roles: ["principal"],
+        },
+        {
+          label: "Danh sách học sinh",
+          href: "/teacher/principal/students",
+          icon: GraduationCap,
+          roles: ["principal"],
+        },
+        {
+          label: "Quản lý giáo viên",
+          href: "/teacher/principal/teacher",
+          icon: UserCog,
+          roles: ["principal"],
+        },
+        {
+          label: "Thông báo toàn trường",
+          href: "/teacher/principal/notification",
+          icon: MessageSquare,
+          roles: ["principal"],
+        },
+        {
+          label: "Duyệt yêu cầu sửa điểm",
+          href: "/teacher/principal/list-sua-diem",
+          icon: ClipboardList,
+          roles: ["principal"],
+        },
+        {
+          label: "Quản lý học bạ",
+          href: "/teacher/principal/transcripts",
+          icon: FolderOpen,
+          roles: ["principal"],
+        },
+      ],
     },
   ];
 

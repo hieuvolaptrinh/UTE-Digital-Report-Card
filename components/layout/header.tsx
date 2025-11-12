@@ -8,7 +8,6 @@ import {
   Bell,
   BookOpen,
   Calendar,
-  ChevronDown,
   FileText,
   Home,
   LayoutDashboard,
@@ -40,7 +39,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 
 // Types
 export type UserRole =
@@ -189,7 +187,6 @@ const navigationConfig: NavItem[] = [
 export function Header({ user, onLogout, className }: HeaderProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [dropdownOpen, setDropdownOpen] = React.useState<string | null>(null);
 
   // Filter nav items based on user role
   const filteredNav = user
@@ -224,7 +221,7 @@ export function Header({ user, onLogout, className }: HeaderProps) {
               className="relative h-10 w-10 rounded-lg bg-primary/10 p-1.5 ring-1 ring-primary/20"
             >
               <div className="h-full w-full flex items-center justify-center">
-                <img src={"/UTE.png"} />
+                <img src={"/UTE.png"} alt="UTE Logo" />
               </div>
             </motion.div>
             <div className="hidden flex-col sm:flex">
@@ -237,75 +234,8 @@ export function Header({ user, onLogout, className }: HeaderProps) {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {filteredNav.map((item) => {
-              if (item.children && item.children.length > 0) {
-                return (
-                  <DropdownMenu
-                    key={item.href}
-                    open={dropdownOpen === item.href}
-                    onOpenChange={(open) =>
-                      setDropdownOpen(open ? item.href : null)
-                    }
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "gap-1.5 font-medium text-sm",
-                          isActive(item.href)
-                            ? "text-primary bg-primary/8"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                        )}
-                      >
-                        {item.icon && <item.icon className="h-4 w-4" />}
-                        {item.label}
-                        <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="start"
-                      className="w-48 bg-background/95 backdrop-blur-[6px] border-border/50"
-                    >
-                      {item.children.map((child) => (
-                        <DropdownMenuItem key={child.href} asChild>
-                          <Link
-                            href={child.href}
-                            className={cn(
-                              "flex items-center gap-2 cursor-pointer",
-                              isActive(child.href) &&
-                                "text-primary bg-primary/8"
-                            )}
-                          >
-                            {child.icon && <child.icon className="h-4 w-4" />}
-                            {child.label}
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                );
-              }
-
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "gap-1.5 font-medium text-sm",
-                      isActive(item.href)
-                        ? "text-primary bg-primary/8"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    )}
-                  >
-                    {item.icon && <item.icon className="h-4 w-4" />}
-                    {item.label}
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Spacer - Navigation moved to sidebar for better UX */}
+          <div className="flex-1" />
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
