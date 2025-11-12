@@ -99,7 +99,10 @@ export default function TeacherManagementPage() {
   const [teachers, setTeachers] = useState<Teacher[]>(mockTeachers);
 
   useEffect(() => {
-    if (!isLoading && (!user || !isTeacher(user) || user.role !== "principal")) {
+    if (
+      !isLoading &&
+      (!user || !isTeacher(user) || user.role !== "principal")
+    ) {
       router.push("/login");
     }
   }, [user, isLoading, router]);
@@ -249,7 +252,11 @@ export default function TeacherManagementPage() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="h-8 w-8 p-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 w-8 p-0"
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button

@@ -67,34 +67,92 @@ export interface TeacherSidebarProps {
 const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
   // Teacher items
   const teacherItems: SidebarItem[] = [
-    { label: "Tổng quan", href: "/teacher", icon: Home, roles: ["teacher", "academic-officer", "principal"] },
-    { label: "Thời khóa biểu", href: "/teacher/schedule", icon: Calendar, roles: ["teacher", "academic-officer", "principal"] },
-    { label: "Lớp chủ nhiệm", href: "/teacher/homeroom-teacher", icon: Users, roles: ["teacher", "academic-officer", "principal"] },
-    { label: "Lớp giảng dạy", href: "/teacher/class", icon: BookOpen, roles: ["teacher", "academic-officer", "principal"] },
-    { label: "Nhập hạnh kiểm", href: "/teacher/hanh-kiem", icon: FileText, roles: ["teacher", "academic-officer", "principal"] },
-    { label: "Yêu cầu sửa điểm", href: "/teacher/yeu-cau-sua-diem", icon: Bell, roles: ["teacher", "academic-officer"] },
-    { label: "Gửi thông báo", href: "/teacher/gui-thong-bao", icon: MessageSquare, roles: ["teacher", "academic-officer", "principal"] },
+    {
+      label: "Tổng quan",
+      href: "/teacher",
+      icon: Home,
+      roles: ["teacher", "academic-officer", "principal"],
+    },
+    {
+      label: "Thời khóa biểu",
+      href: "/teacher/schedule",
+      icon: Calendar,
+      roles: ["teacher", "academic-officer", "principal"],
+    },
+    {
+      label: "Lớp chủ nhiệm",
+      href: "/teacher/homeroom-teacher",
+      icon: Users,
+      roles: ["teacher", "academic-officer", "principal"],
+    },
+    {
+      label: "Lớp giảng dạy",
+      href: "/teacher/class",
+      icon: BookOpen,
+      roles: ["teacher", "academic-officer", "principal"],
+    },
+    {
+      label: "Nhập hạnh kiểm",
+      href: "/teacher/hanh-kiem",
+      icon: FileText,
+      roles: ["teacher", "academic-officer", "principal"],
+    },
+    {
+      label: "Yêu cầu sửa điểm",
+      href: "/teacher/yeu-cau-sua-diem",
+      icon: Bell,
+      roles: ["teacher", "academic-officer"],
+    },
+    {
+      label: "Gửi thông báo",
+      href: "/teacher/gui-thong-bao",
+      icon: MessageSquare,
+      roles: ["teacher", "academic-officer", "principal"],
+    },
   ];
 
   // Principal exclusive items
   const principalItems: SidebarItem[] = [
-    { label: "Quản lý giáo viên", href: "/teacher/principal/teacher", icon: UserCog, roles: ["principal"] },
-    { label: "Thông báo toàn trường", href: "/teacher/principal/notification", icon: MessageSquare, roles: ["principal"] },
-    { label: "Duyệt yêu cầu sửa điểm", href: "/teacher/principal/list-sua-diem", icon: FileText, roles: ["principal"] },
-    { label: "Báo cáo thống kê", href: "/teacher/principal", icon: BarChart3, roles: ["principal"] },
+    {
+      label: "Quản lý giáo viên",
+      href: "/teacher/principal/teacher",
+      icon: UserCog,
+      roles: ["principal"],
+    },
+    {
+      label: "Thông báo toàn trường",
+      href: "/teacher/principal/notification",
+      icon: MessageSquare,
+      roles: ["principal"],
+    },
+    {
+      label: "Duyệt yêu cầu sửa điểm",
+      href: "/teacher/principal/list-sua-diem",
+      icon: FileText,
+      roles: ["principal"],
+    },
+    {
+      label: "Báo cáo thống kê",
+      href: "/teacher/principal",
+      icon: BarChart3,
+      roles: ["principal"],
+    },
   ];
 
   // Filter items based on role
   if (role === "principal") {
-    return [...teacherItems.filter(item => item.roles?.includes(role)), ...principalItems];
+    return [
+      ...teacherItems.filter((item) => item.roles?.includes(role)),
+      ...principalItems,
+    ];
   }
 
   if (role === "academic-officer") {
-    return teacherItems.filter(item => item.roles?.includes(role));
+    return teacherItems.filter((item) => item.roles?.includes(role));
   }
 
   // Default teacher role
-  return teacherItems.filter(item => item.roles?.includes(role));
+  return teacherItems.filter((item) => item.roles?.includes(role));
 };
 
 function SidebarNav({

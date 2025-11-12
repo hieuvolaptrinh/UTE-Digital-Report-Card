@@ -25,7 +25,10 @@ export default function PrincipalDashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && (!user || !isTeacher(user) || user.role !== "principal")) {
+    if (
+      !isLoading &&
+      (!user || !isTeacher(user) || user.role !== "principal")
+    ) {
       router.push("/login");
     }
   }, [user, isLoading, router]);
@@ -217,9 +220,7 @@ export default function PrincipalDashboardPage() {
                       </div>
                     </div>
                     <Badge
-                      variant={
-                        request.count > 0 ? "destructive" : "secondary"
-                      }
+                      variant={request.count > 0 ? "destructive" : "secondary"}
                     >
                       {request.count > 0 ? "Cần xử lý" : "Đã xử lý"}
                     </Badge>

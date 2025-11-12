@@ -27,12 +27,17 @@ export default function SchoolNotificationPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
-  const [recipient, setRecipient] = useState<"all" | "teachers" | "students" | "parents">("all");
+  const [recipient, setRecipient] = useState<
+    "all" | "teachers" | "students" | "parents"
+  >("all");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && (!user || !isTeacher(user) || user.role !== "principal")) {
+    if (
+      !isLoading &&
+      (!user || !isTeacher(user) || user.role !== "principal")
+    ) {
       router.push("/login");
     }
   }, [user, isLoading, router]);
@@ -97,7 +102,8 @@ export default function SchoolNotificationPage() {
     {
       id: 1,
       title: "Thông báo nghỉ học do bão",
-      content: "Nhà trường thông báo nghỉ học các ngày 15-16/11 do ảnh hưởng của bão...",
+      content:
+        "Nhà trường thông báo nghỉ học các ngày 15-16/11 do ảnh hưởng của bão...",
       priority: "high" as const,
       recipient: "all" as const,
       date: "2024-11-10",
@@ -125,7 +131,8 @@ export default function SchoolNotificationPage() {
 
   const priorityColors = {
     high: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
-    medium: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    medium:
+      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
     low: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
   };
 
@@ -239,7 +246,9 @@ export default function SchoolNotificationPage() {
                       <Select
                         value={recipient}
                         onValueChange={(value) =>
-                          setRecipient(value as "all" | "teachers" | "students" | "parents")
+                          setRecipient(
+                            value as "all" | "teachers" | "students" | "parents"
+                          )
                         }
                       >
                         <SelectTrigger className="mt-1.5">
@@ -326,7 +335,9 @@ export default function SchoolNotificationPage() {
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(notification.date).toLocaleDateString("vi-VN")}
+                          {new Date(notification.date).toLocaleDateString(
+                            "vi-VN"
+                          )}
                         </div>
                         <Badge variant="secondary" className="text-xs">
                           {recipientLabels[notification.recipient]}
