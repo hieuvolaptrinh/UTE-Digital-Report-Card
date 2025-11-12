@@ -1,0 +1,105 @@
+/* app/styles/teacher-theme.css */
+
+/* Glassmorphism helper classes */
+.glass-panel {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: hsl(var(--background) / 0.12);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.glass-panel-strong {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: hsl(var(--background) / 0.18);
+  border: 1px solid hsl(var(--border) / 0.6);
+}
+
+/* Soft shadows */
+.shadow-soft {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-soft-lg {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.dark .shadow-soft {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .shadow-soft-lg {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Grade badge variants */
+.badge-excellent {
+  @apply bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20;
+}
+
+.badge-good {
+  @apply bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20;
+}
+
+.badge-fair {
+  @apply bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20;
+}
+
+.badge-poor {
+  @apply bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20;
+}
+
+/* Focus ring enhancement */
+.focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom scrollbar for dialogs */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.2);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+}
+
+/* Gradient backgrounds */
+.bg-linear-to-br {
+  background: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+/* Teacher theme specific colors */
+:root {
+  --teacher-primary: 24 100% 50%;
+  --teacher-secondary: 45 93% 47%;
+  --teacher-accent: 217 91% 60%;
+}
+
+.dark {
+  --teacher-primary: 24 100% 55%;
+  --teacher-secondary: 45 93% 52%;
+  --teacher-accent: 217 91% 65%;
+}

@@ -36,7 +36,7 @@ const footerLinks = {
   contact: {
     address: "01 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh",
     phone: "(028) 3897 2092",
-    email: "dhspkt@hcmute.edu.vn",
+    email: "dhspkt@ute.udn.vn",
   },
   social: [
     { label: "Facebook", icon: Facebook, href: "https://facebook.com/dhspkt" },

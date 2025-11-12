@@ -47,8 +47,8 @@ export const schoolInfo: SchoolInfo = {
   fullName: "Trường Đại học Sư phạm Kỹ thuật TP. Hồ Chí Minh",
   address: "01 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh",
   phone: "(028) 3897 2092",
-  email: "dhspkt@hcmute.edu.vn",
-  website: "https://www.hcmute.edu.vn",
+  email: "dhspkt@ute.udn.vn",
+  website: "https://www.ute.udn.vn",
   founded: 1962,
   motto: "Đào tạo - Nghiên cứu - Ứng dụng",
   description:

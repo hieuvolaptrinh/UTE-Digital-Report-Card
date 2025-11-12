@@ -71,7 +71,7 @@ import { Header } from "@/components/layout/header";
 
 const user = {
   name: "Nguyễn Văn A",
-  email: "student@hcmute.edu.vn",
+  email: "student@ute.udn.vn",
   role: "student",
 };
 
@@ -166,7 +166,7 @@ import { TeacherSidebar } from "@/components/layout/teacher/sidebar";
 
 const teacherUser = {
   name: "Nguyễn Văn B",
-  email: "teacher@hcmute.edu.vn",
+  email: "teacher@ute.udn.vn",
   role: "teacher",
   subject: "Toán học",
   classes: ["10A1", "11A2"],
@@ -426,7 +426,7 @@ import { motion } from "motion/react";
 
 - 📍 01 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. HCM
 - 📞 (028) 3897 2092
-- 📧 dhspkt@hcmute.edu.vn
+- 📧 dhspkt@ute.udn.vn
 
 ---
 

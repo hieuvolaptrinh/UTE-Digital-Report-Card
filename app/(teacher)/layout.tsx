@@ -7,7 +7,7 @@ import type { TeacherUser } from "@/components/layout/teacher/sidebar";
 // Mock teacher user - replace with actual authentication
 const mockTeacherUser: TeacherUser = {
   name: "Nguyễn Văn B",
-  email: "nguyenvanb@hcmute.edu.vn",
+  email: "nguyenvanb@ute.udn.vn",
   avatar: "",
   role: "teacher",
   subject: "Toán học",
