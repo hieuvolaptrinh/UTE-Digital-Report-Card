@@ -9,13 +9,22 @@ import { Footer } from "@/components/layout/footer";
 import { GradesOverview } from "@/components/section/student/grades-overview";
 import { GradesTable } from "@/components/section/student/grades-table";
 import { GlassCard } from "@/components/ui/glass-card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { mockGrades } from "@/mork-data";
-import { Calendar, FileText, BookOpen, Clock } from "lucide-react";
-import Link from "next/link";
+import { Filter } from "lucide-react";
 
 export default function StudentPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
+  const [academicYear, setAcademicYear] = useState("2024-2025");
+  const [semester, setSemester] = useState<1 | 2>(1);
   const [studentGrades, setStudentGrades] = useState(mockGrades);
 
   useEffect(() => {
@@ -24,10 +33,15 @@ export default function StudentPage() {
     }
 
     if (user && isStudent(user)) {
-      const grades = mockGrades.filter((g) => g.studentId === user.studentId);
+      const grades = mockGrades.filter(
+        (g) =>
+          g.studentId === user.studentId &&
+          g.academicYear === academicYear &&
+          g.semester === semester
+      );
       setStudentGrades(grades);
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, academicYear, semester]);
 
   if (isLoading || !user || !isStudent(user)) {
     return (
@@ -49,6 +63,51 @@ export default function StudentPage() {
       <Header user={headerUser} onLogout={logout} />
       <main className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
         <div className="container mx-auto px-4 py-6">
+          {/* Filter Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6"
+          >
+            <GlassCard padding="md">
+              <div className="flex items-center gap-3 mb-4">
+                <Filter className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold">Lọc bảng điểm</h3>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="academicYear">Năm học</Label>
+                  <Select value={academicYear} onValueChange={setAcademicYear}>
+                    <SelectTrigger id="academicYear">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2024-2025">2024-2025</SelectItem>
+                      <SelectItem value="2023-2024">2023-2024</SelectItem>
+                      <SelectItem value="2022-2023">2022-2023</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="semester">Học kỳ</Label>
+                  <Select
+                    value={semester.toString()}
+                    onValueChange={(val) => setSemester(parseInt(val) as 1 | 2)}
+                  >
+                    <SelectTrigger id="semester">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Học kỳ I</SelectItem>
+                      <SelectItem value="2">Học kỳ II</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+
           <GradesOverview grades={studentGrades} />
           <GradesTable grades={studentGrades} />
         </div>

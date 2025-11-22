@@ -13,6 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Grade } from "@/mork-data";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 interface GradesTableProps {
   grades: Grade[];
@@ -83,12 +85,20 @@ export function GradesTable({ grades }: GradesTableProps) {
                   className="border-white/10 hover:bg-white/5 dark:hover:bg-black/5"
                 >
                   <TableCell className="font-medium">
-                    <div>
-                      <div>{grade.subjectName}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        GV: {grade.teacherName}
+                    <Link
+                      href="/student/subject-detail"
+                      className="flex items-center justify-between group"
+                    >
+                      <div>
+                        <div className="group-hover:text-primary transition-colors">
+                          {grade.subjectName}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          GV: {grade.teacherName}
+                        </div>
                       </div>
-                    </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    </Link>
                   </TableCell>
                   <TableCell className="text-center text-sm">
                     {grade.scores.oral.join(", ")}

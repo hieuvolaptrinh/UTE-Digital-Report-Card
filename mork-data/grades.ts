@@ -15,6 +15,26 @@ export interface Grade {
   average: number;
   teacherId: string;
   teacherName: string;
+  teacherComment?: string; // Nhận xét của giáo viên
+}
+
+export interface GradeEditRequest {
+  id: string;
+  studentId: string;
+  studentName: string;
+  subjectId: string;
+  subjectName: string;
+  scoreType: "oral" | "test15min" | "test45min" | "midterm" | "final";
+  scoreTypeLabel: string;
+  currentScore: number;
+  reason: string;
+  evidence?: string; // URL or base64 của hình ảnh minh chứng
+  status: "pending" | "approved" | "rejected";
+  teacherId: string;
+  teacherName: string;
+  teacherResponse?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Conduct {
@@ -47,6 +67,8 @@ export const mockGrades: Grade[] = [
     average: 8.6,
     teacherId: "GV001",
     teacherName: "Phạm Văn D",
+    teacherComment:
+      "Em có năng lực toán học tốt, tư duy logic rõ ràng. Tiếp tục phát huy và rèn luyện thêm về giải toán nâng cao.",
   },
   {
     studentId: "2024001",
@@ -64,6 +86,8 @@ export const mockGrades: Grade[] = [
     average: 7.6,
     teacherId: "GV002",
     teacherName: "Nguyễn Thị E",
+    teacherComment:
+      "Em có khả năng diễn đạt khá tốt. Cần đọc thêm sách và luyện tập viết văn nhiều hơn để nâng cao kỹ năng.",
   },
   {
     studentId: "2024001",
@@ -81,6 +105,8 @@ export const mockGrades: Grade[] = [
     average: 9.1,
     teacherId: "GV004",
     teacherName: "Lê Thị G",
+    teacherComment:
+      "Excellent performance! Em có khả năng nghe, nói, đọc, viết tiếng Anh rất tốt. Tiếp tục duy trì và phát triển.",
   },
   {
     studentId: "2024001",
@@ -98,6 +124,8 @@ export const mockGrades: Grade[] = [
     average: 8.6,
     teacherId: "GV003",
     teacherName: "Trần Văn F",
+    teacherComment:
+      "Em nắm vững kiến thức lý thuyết và vận dụng tốt vào bài tập thực hành. Tiếp tục rèn luyện các dạng bài nâng cao.",
   },
   {
     studentId: "2024001",
@@ -115,6 +143,8 @@ export const mockGrades: Grade[] = [
     average: 7.6,
     teacherId: "GV005",
     teacherName: "Nguyễn Văn H",
+    teacherComment:
+      "Em cần chú ý hơn trong việc cân bằng phương trình và tính toán hóa học. Nên làm thêm bài tập để thành thạo.",
   },
 
   // Student S002 - Trần Thị B - 10A1
@@ -134,6 +164,8 @@ export const mockGrades: Grade[] = [
     average: 9.3,
     teacherId: "GV001",
     teacherName: "Phạm Văn D",
+    teacherComment:
+      "Em là học sinh xuất sắc, luôn đạt điểm cao và có tư duy toán học vượt trội. Tiếp tục phát huy.",
   },
   {
     studentId: "2024002",
@@ -151,6 +183,69 @@ export const mockGrades: Grade[] = [
     average: 8.6,
     teacherId: "GV002",
     teacherName: "Nguyễn Thị E",
+    teacherComment:
+      "Em có khả năng phân tích văn bản sâu sắc và viết văn có cảm xúc. Là tấm gương cho các bạn trong lớp.",
+  },
+];
+
+// Mock Grade Edit Requests Data
+export const mockGradeEditRequests: GradeEditRequest[] = [
+  {
+    id: "REQ001",
+    studentId: "2024001",
+    studentName: "Nguyễn Văn A",
+    subjectId: "TOAN",
+    subjectName: "Toán học",
+    scoreType: "test45min",
+    scoreTypeLabel: "Điểm kiểm tra 1 tiết",
+    currentScore: 8,
+    reason:
+      "Em làm đúng bài toán cuối nhưng giáo viên chưa chấm điểm phần này. Em có hình ảnh bài làm minh chứng.",
+    evidence: "https://placehold.co/600x400/png?text=Bai+Lam+Toan",
+    status: "pending",
+    teacherId: "GV001",
+    teacherName: "Phạm Văn D",
+    createdAt: "2024-11-20T08:30:00Z",
+    updatedAt: "2024-11-20T08:30:00Z",
+  },
+  {
+    id: "REQ002",
+    studentId: "2024001",
+    studentName: "Nguyễn Văn A",
+    subjectId: "VAN",
+    subjectName: "Ngữ văn",
+    scoreType: "final",
+    scoreTypeLabel: "Điểm thi cuối kỳ",
+    currentScore: 8,
+    reason:
+      "Em nghĩ bài văn của em đạt yêu cầu cao hơn. Xin giáo viên xem xét lại phần kết bài.",
+    status: "rejected",
+    teacherId: "GV002",
+    teacherName: "Nguyễn Thị E",
+    teacherResponse:
+      "Sau khi xem xét lại, điểm số của em là chính xác. Phần kết bài còn chưa thật sự thuyết phục.",
+    createdAt: "2024-11-15T10:00:00Z",
+    updatedAt: "2024-11-16T14:20:00Z",
+  },
+  {
+    id: "REQ003",
+    studentId: "2024001",
+    studentName: "Nguyễn Văn A",
+    subjectId: "LY",
+    subjectName: "Vật lý",
+    scoreType: "midterm",
+    scoreTypeLabel: "Điểm giữa kỳ",
+    currentScore: 8.5,
+    reason:
+      "Em làm đúng câu 5 nhưng bị tính sai. Em có bài làm chính xác với cách giải chi tiết.",
+    evidence: "https://placehold.co/600x400/png?text=Bai+Lam+Vat+Ly",
+    status: "approved",
+    teacherId: "GV003",
+    teacherName: "Trần Văn F",
+    teacherResponse:
+      "Sau khi xem xét, thầy đã điều chỉnh điểm của em lên 9. Chúc mừng em!",
+    createdAt: "2024-11-10T15:30:00Z",
+    updatedAt: "2024-11-12T09:45:00Z",
   },
 ];
 
@@ -224,6 +319,20 @@ export function calculateGPA(grades: Grade[]): number {
   return Math.round((sum / grades.length) * 10) / 10;
 }
 
+// Helper functions for grade edit requests
+export function getGradeEditRequestsByStudent(studentId: string) {
+  return mockGradeEditRequests.filter((req) => req.studentId === studentId);
+}
+
+export function getGradeEditRequestsBySubject(
+  studentId: string,
+  subjectId: string
+) {
+  return mockGradeEditRequests.filter(
+    (req) => req.studentId === studentId && req.subjectId === subjectId
+  );
+}
+
 // Subjects
 export const subjects = [
   { id: "TOAN", name: "Toán học", code: "TOAN" },
@@ -239,3 +348,12 @@ export const subjects = [
   { id: "CN", name: "Công nghệ", code: "CN" },
   { id: "TIN", name: "Tin học", code: "TIN" },
 ];
+
+// Score type labels
+export const scoreTypeLabels: Record<string, string> = {
+  oral: "Điểm miệng",
+  test15min: "Điểm 15 phút",
+  test45min: "Điểm 1 tiết",
+  midterm: "Điểm giữa kỳ",
+  final: "Điểm cuối kỳ",
+};
