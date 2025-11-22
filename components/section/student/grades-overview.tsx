@@ -13,6 +13,15 @@ interface GradesOverviewProps {
 }
 
 export function GradesOverview({ grades }: GradesOverviewProps) {
+  // 🛡️ FIX — Không có điểm → show UI thay vì crash
+  if (!grades || grades.length === 0) {
+    return (
+      <div className="p-6 text-center text-muted-foreground">
+        Chưa có dữ liệu điểm để hiển thị.
+      </div>
+    );
+  }
+
   // Calculate overall average
   const overallAverage =
     grades.reduce((sum, grade) => sum + grade.average, 0) / grades.length;
