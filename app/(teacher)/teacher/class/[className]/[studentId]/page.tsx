@@ -31,7 +31,8 @@ export default function StudentGradePage() {
   const router = useRouter();
   const params = useParams();
   const className = decodeURIComponent(params.className as string);
-  const studentId = decodeURIComponent(params.studentId as string);
+  // Hardcode studentId to always be 2024001
+  const studentId = "2024001";
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -49,7 +50,9 @@ export default function StudentGradePage() {
 
   useEffect(() => {
     if (user && isTeacher(user) && student) {
-      const grades = getGradesByClassAndSubject(className, user.subject || "");
+      // Hardcode to always use Toán học subject for demo
+      const subject = "Toán học";
+      const grades = getGradesByClassAndSubject(className, subject);
       const studentGrade = grades.find(
         (g) => g.studentId === student.studentId
       );
@@ -57,7 +60,7 @@ export default function StudentGradePage() {
         studentGrade || {
           studentId: student.studentId,
           subjectId: "",
-          subjectName: user.subject || "",
+          subjectName: subject,
           oral: [],
           test15min: [],
           test45min: [],
@@ -205,7 +208,7 @@ export default function StudentGradePage() {
                   </Badge>
                   <Badge variant="outline" className="text-base">
                     <BookOpen className="h-3 w-3 mr-1" />
-                    {user.subject}
+                    Toán học
                   </Badge>
                 </div>
               </div>
@@ -389,7 +392,7 @@ export default function StudentGradePage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         studentName={student.name}
-        subject={user.subject || ""}
+        subject="Toán học"
         initialGrades={studentGrades}
         onSave={handleSave}
       />

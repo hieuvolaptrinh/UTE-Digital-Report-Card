@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -42,6 +43,9 @@ export function StudentGradeDialog({
   const [midterm, setMidterm] = useState<string>("");
   const [final, setFinal] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [editReason, setEditReason] = useState("");
+  const [showEditRequest, setShowEditRequest] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
 
   // Initialize from initialGrades when dialog opens
   useEffect(() => {
@@ -377,13 +381,73 @@ export function StudentGradeDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Đang lưu..." : "Lưu điểm"}
-          </Button>
+          {!showEditRequest && !requestSent && (
+            <>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Đang lưu..." : "Lưu điểm"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowEditRequest(true)}
+              >
+                Yêu cầu sửa điểm
+              </Button>
+            </>
+          )}
+          {showEditRequest && !requestSent && (
+            <div className="w-full space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="editReason">Lý do yêu cầu sửa điểm</Label>
+                <textarea
+                  id="editReason"
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Nhập lý do yêu cầu sửa điểm..."
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditRequest(false);
+                    setEditReason("");
+                  }}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (editReason.trim()) {
+                      setRequestSent(true);
+                      setTimeout(() => {
+                        setRequestSent(false);
+                        setShowEditRequest(false);
+                        setEditReason("");
+                        onOpenChange(false);
+                      }, 2000);
+                    }
+                  }}
+                  disabled={!editReason.trim()}
+                >
+                  Gửi yêu cầu
+                </Button>
+              </div>
+            </div>
+          )}
+          {requestSent && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full text-center py-4 text-green-600 dark:text-green-400 font-medium"
+            >
+              ✓ Yêu cầu sửa điểm đã được gửi!
+            </motion.div>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

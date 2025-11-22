@@ -106,6 +106,7 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
       label: "Yêu cầu sửa điểm",
       href: "/teacher/yeu-cau-sua-diem",
       icon: Bell,
+      badge: 3,
       roles: ["teacher", "academic-officer"],
     },
     {

@@ -10,6 +10,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -19,8 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getStudentDetailsByClass, mockGrades } from "@/mork-data";
-import Link from "next/link";
-import { ArrowLeft, Save, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle2, Eye } from "lucide-react";
 
 interface StudentGrade {
   studentId: string;
@@ -231,6 +231,9 @@ export default function ClassDetailPage() {
                       <TableHead className="font-semibold text-center w-24">
                         TB
                       </TableHead>
+                      <TableHead className="font-semibold text-center w-32">
+                        Thao tác
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -334,6 +337,16 @@ export default function ClassDetailPage() {
                         </TableCell>
                         <TableCell className="text-center font-semibold text-primary">
                           {calculateAverage(student)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Link
+                            href={`/teacher/class/${className}/${student.studentId}`}
+                          >
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4 mr-1" />
+                              Chi tiết
+                            </Button>
+                          </Link>
                         </TableCell>
                       </TableRow>
                     ))}

@@ -29,7 +29,17 @@ import {
   Calendar,
   User,
   BookOpen,
+  Filter,
+  Image as ImageIcon,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Image from "next/image";
 
 interface GradeEditRequest {
   id: string;
@@ -47,6 +57,7 @@ interface GradeEditRequest {
   submittedAt: string;
   reviewedAt?: string;
   reviewNote?: string;
+  imageUrl?: string;
 }
 
 const mockRequests: GradeEditRequest[] = [
@@ -64,6 +75,7 @@ const mockRequests: GradeEditRequest[] = [
     reason: "Nhầm lẫn khi nhập điểm, đã kiểm tra lại bài làm của học sinh",
     status: "pending",
     submittedAt: "2024-11-10T10:30:00Z",
+    imageUrl: "/baiktr.jpg",
   },
   {
     id: "REQ002",
@@ -79,6 +91,7 @@ const mockRequests: GradeEditRequest[] = [
     reason: "Học sinh có phần trả lời rất tốt nhưng chưa được ghi nhận đầy đủ",
     status: "pending",
     submittedAt: "2024-11-09T14:20:00Z",
+    imageUrl: "/baiktr.jpg",
   },
   {
     id: "REQ003",
@@ -96,6 +109,7 @@ const mockRequests: GradeEditRequest[] = [
     submittedAt: "2024-11-08T09:15:00Z",
     reviewedAt: "2024-11-08T16:30:00Z",
     reviewNote: "Đã xem xét và đồng ý chỉnh sửa điểm",
+    imageUrl: "/baiktr.jpg",
   },
   {
     id: "REQ004",
@@ -142,6 +156,8 @@ export default function GradeEditApprovalPage() {
   const [actionType, setActionType] = useState<"approve" | "reject" | "view">(
     "view"
   );
+  const [filterClass, setFilterClass] = useState<string>("all");
+  const [filterTeacher, setFilterTeacher] = useState<string>("all");
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -210,8 +226,28 @@ export default function GradeEditApprovalPage() {
     setReviewNote("");
   };
 
-  const pendingRequests = requests.filter((r) => r.status === "pending");
-  const processedRequests = requests.filter((r) => r.status !== "pending");
+  // Apply filters
+  const filteredRequests = requests.filter((r) => {
+    if (filterClass !== "all" && r.class !== filterClass) return false;
+    if (filterTeacher !== "all" && r.teacherName !== filterTeacher)
+      return false;
+    return true;
+  });
+
+  const pendingRequests = filteredRequests.filter(
+    (r) => r.status === "pending"
+  );
+  const processedRequests = filteredRequests.filter(
+    (r) => r.status !== "pending"
+  );
+
+  // Get unique classes and teachers for filter
+  const uniqueClasses = Array.from(
+    new Set(requests.map((r) => r.class))
+  ).sort();
+  const uniqueTeachers = Array.from(
+    new Set(requests.map((r) => r.teacherName))
+  ).sort();
 
   const statusColors = {
     pending:
@@ -256,6 +292,74 @@ export default function GradeEditApprovalPage() {
                 </p>
               </div>
             </div>
+          </motion.div>
+
+          {/* Filters */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="mb-6"
+          >
+            <GlassCard padding="lg">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">Bộ lọc:</span>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Label className="whitespace-nowrap">Lớp:</Label>
+                    <Select value={filterClass} onValueChange={setFilterClass}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        {uniqueClasses.map((cls) => (
+                          <SelectItem key={cls} value={cls}>
+                            {cls}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="whitespace-nowrap">Giáo viên:</Label>
+                    <Select
+                      value={filterTeacher}
+                      onValueChange={setFilterTeacher}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        {uniqueTeachers.map((teacher) => (
+                          <SelectItem key={teacher} value={teacher}>
+                            {teacher}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {(filterClass !== "all" || filterTeacher !== "all") && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setFilterClass("all");
+                        setFilterTeacher("all");
+                      }}
+                      className="gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Xóa bộ lọc
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </GlassCard>
           </motion.div>
 
           {/* Pending Requests */}
@@ -532,6 +636,24 @@ export default function GradeEditApprovalPage() {
                   {selectedRequest.reason}
                 </p>
               </div>
+
+              {selectedRequest.imageUrl && (
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Hình ảnh bài kiểm tra
+                  </Label>
+                  <div className="mt-2 relative w-full aspect-[4/3] rounded-lg overflow-hidden border border-border">
+                    <Image
+                      src={selectedRequest.imageUrl}
+                      alt="Bài kiểm tra"
+                      fill
+                      className="object-contain bg-muted"
+                      priority
+                    />
+                  </div>
+                </div>
+              )}
 
               {actionType !== "view" && (
                 <div>

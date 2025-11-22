@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -19,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { mockGradeEditRequests, GradeEditRequest } from "@/mork-data";
 import { FileText, Eye, Clock, CheckCircle, XCircle } from "lucide-react";
@@ -29,6 +31,8 @@ export function GradeEditRequestsList() {
   );
   const [selectedRequest, setSelectedRequest] =
     useState<GradeEditRequest | null>(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -116,21 +120,19 @@ export function GradeEditRequestsList() {
                     </TableCell>
                     <TableCell>{request.class}</TableCell>
                     <TableCell>{request.subject}</TableCell>
+                    <TableCell>{getScoreTypeName(request.scoreType)}</TableCell>
                     <TableCell>
-                      {getScoreTypeName(request.currentScore.type)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {request.currentScore.value}
-                      </Badge>
+                      <Badge variant="outline">{request.oldScore}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-blue-500/10 text-blue-600">
-                        {request.proposedScore}
+                        {request.newScore}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {request.requestDate}
+                      {new Date(request.requestedAt).toLocaleDateString(
+                        "vi-VN"
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge className={statusInfo.color}>
@@ -207,11 +209,12 @@ export function GradeEditRequestsList() {
                                   </div>
                                   <div>
                                     <p className="text-muted-foreground">
-                                      Học kỳ
+                                      Ngày gửi
                                     </p>
                                     <p>
-                                      HK{selectedRequest.semester} -{" "}
-                                      {selectedRequest.academicYear}
+                                      {new Date(
+                                        selectedRequest.requestedAt
+                                      ).toLocaleDateString("vi-VN")}
                                     </p>
                                   </div>
                                 </div>
@@ -228,7 +231,7 @@ export function GradeEditRequestsList() {
                                     </p>
                                     <Badge variant="outline">
                                       {getScoreTypeName(
-                                        selectedRequest.currentScore.type
+                                        selectedRequest.scoreType
                                       )}
                                     </Badge>
                                   </div>
@@ -237,7 +240,7 @@ export function GradeEditRequestsList() {
                                       Điểm hiện tại
                                     </p>
                                     <p className="text-lg font-bold text-red-600">
-                                      {selectedRequest.currentScore.value}
+                                      {selectedRequest.oldScore}
                                     </p>
                                   </div>
                                   <div>
@@ -245,7 +248,7 @@ export function GradeEditRequestsList() {
                                       Điểm đề xuất
                                     </p>
                                     <p className="text-lg font-bold text-green-600">
-                                      {selectedRequest.proposedScore}
+                                      {selectedRequest.newScore}
                                     </p>
                                   </div>
                                 </div>
@@ -261,9 +264,14 @@ export function GradeEditRequestsList() {
                               <div className="border-t pt-4">
                                 <div className="text-sm text-muted-foreground">
                                   <p>
-                                    Người gửi: {selectedRequest.requestedByName}
+                                    Người gửi: {selectedRequest.teacherName}
                                   </p>
-                                  <p>Ngày gửi: {selectedRequest.requestDate}</p>
+                                  <p>
+                                    Ngày gửi:{" "}
+                                    {new Date(
+                                      selectedRequest.requestedAt
+                                    ).toLocaleString("vi-VN")}
+                                  </p>
                                 </div>
                               </div>
 
@@ -277,14 +285,94 @@ export function GradeEditRequestsList() {
                                       {selectedRequest.reviewNote}
                                     </p>
                                     <div className="text-xs text-muted-foreground">
-                                      <p>{selectedRequest.reviewedByName}</p>
-                                      <p>{selectedRequest.reviewDate}</p>
+                                      <p>
+                                        Người duyệt:{" "}
+                                        {selectedRequest.reviewedBy}
+                                      </p>
+                                      <p>
+                                        {selectedRequest.reviewedAt
+                                          ? new Date(
+                                              selectedRequest.reviewedAt
+                                            ).toLocaleString("vi-VN")
+                                          : ""}
+                                      </p>
                                     </div>
                                   </div>
                                 </div>
                               )}
+
+                              {selectedRequest.status === "pending" && (
+                                <div className="border-t pt-4 flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setShowRejectDialog(true)}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Từ chối
+                                  </Button>
+                                  <Button
+                                    onClick={() => {
+                                      window.location.href = `/teacher/class/10A1/2024001`;
+                                    }}
+                                  >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Sửa ngay
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           )}
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Reject Dialog */}
+                      <Dialog
+                        open={showRejectDialog}
+                        onOpenChange={setShowRejectDialog}
+                      >
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Từ chối yêu cầu sửa điểm</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Nhập lý do từ chối yêu cầu sửa điểm
+                              </p>
+                              <Textarea
+                                value={rejectReason}
+                                onChange={(e) =>
+                                  setRejectReason(e.target.value)
+                                }
+                                placeholder="Nhập lý do từ chối..."
+                                rows={4}
+                                className="resize-none"
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setShowRejectDialog(false);
+                                setRejectReason("");
+                              }}
+                            >
+                              Hủy
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => {
+                                // TODO: Handle reject logic here
+                                console.log("Reject reason:", rejectReason);
+                                setShowRejectDialog(false);
+                                setRejectReason("");
+                              }}
+                              disabled={!rejectReason.trim()}
+                            >
+                              Xác nhận từ chối
+                            </Button>
+                          </DialogFooter>
                         </DialogContent>
                       </Dialog>
                     </TableCell>

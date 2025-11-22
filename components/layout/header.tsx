@@ -242,6 +242,66 @@ export function Header({ user, onLogout, className }: HeaderProps) {
             {/* Theme Toggle */}
             <ModeToggle />
 
+            {/* Notification Bell */}
+            {user &&
+              (user.role === "teacher" ||
+                user.role === "principal" ||
+                user.role === "academic-officer") && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="h-5 w-5" />
+                      <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80">
+                    <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <div className="max-h-[400px] overflow-y-auto">
+                      <div className="p-3 hover:bg-muted/50 cursor-pointer border-b">
+                        <p className="text-sm font-medium">
+                          Yêu cầu sửa điểm mới
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Nguyễn Văn A đã gửi yêu cầu sửa điểm môn Toán
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          5 phút trước
+                        </p>
+                      </div>
+                      <div className="p-3 hover:bg-muted/50 cursor-pointer border-b">
+                        <p className="text-sm font-medium">
+                          Yêu cầu được duyệt
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Yêu cầu sửa điểm #REQ001 đã được ban giám hiệu duyệt
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          2 giờ trước
+                        </p>
+                      </div>
+                      <div className="p-3 hover:bg-muted/50 cursor-pointer border-b">
+                        <p className="text-sm font-medium">
+                          Nhắc nhở nhập điểm
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Vui lòng hoàn thành nhập điểm cuối kỳ cho lớp 10A1
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          1 ngày trước
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <div className="p-2">
+                      <Button variant="ghost" size="sm" className="w-full">
+                        Xem tất cả
+                      </Button>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
             {/* User Menu */}
             {user ? (
               <DropdownMenu>

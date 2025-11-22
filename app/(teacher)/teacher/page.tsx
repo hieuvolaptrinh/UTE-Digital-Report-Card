@@ -9,17 +9,20 @@ import { Footer } from "@/components/layout/footer";
 import { GlassCard } from "@/components/ui/glass-card";
 import { StatCard } from "@/components/shared/stat-card";
 import { Badge } from "@/components/ui/badge";
-import { mockSchedule, mockGradeEditRequests, allMockStudents } from "@/mork-data";
+import {
+  mockSchedule,
+  mockGradeEditRequests,
+  allMockStudents,
+} from "@/mork-data";
 import Link from "next/link";
-import { 
-  Calendar, 
-  ClipboardList, 
-  Users, 
-  Bell, 
-  BookOpen, 
-  MessageSquare, 
-  FileText, 
-  GraduationCap
+import {
+  Calendar,
+  ClipboardList,
+  Users,
+  Bell,
+  BookOpen,
+  FileText,
+  GraduationCap,
 } from "lucide-react";
 
 export default function TeacherPage() {
@@ -47,10 +50,14 @@ export default function TeacherPage() {
     role: user.role as any,
   };
 
-  const teacherSchedule = mockSchedule.filter(s => s.teacherId === user.teacherId);
-  const pending = mockGradeEditRequests.filter(r => r.status === "pending").length;
-  const homeRoomStudents = user.homeRoomClass 
-    ? allMockStudents.filter(s => s.class === user.homeRoomClass).length 
+  const teacherSchedule = mockSchedule.filter(
+    (s) => s.teacherId === user.teacherId
+  );
+  const pending = mockGradeEditRequests.filter(
+    (r) => r.status === "pending"
+  ).length;
+  const homeRoomStudents = user.homeRoomClass
+    ? allMockStudents.filter((s) => s.class === user.homeRoomClass).length
     : 0;
 
   return (
@@ -64,9 +71,7 @@ export default function TeacherPage() {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-3xl font-bold mb-2">Dashboard Giáo viên</h1>
-            <p className="text-muted-foreground mb-8">
-              Xin chào, {user.name}!
-            </p>
+            <p className="text-muted-foreground mb-8">Xin chào, {user.name}!</p>
           </motion.div>
 
           {/* Stats Grid */}
@@ -111,14 +116,19 @@ export default function TeacherPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {user.homeRoomClass && (
                 <Link href="/teacher/homeroom-teacher">
-                  <GlassCard padding="md" className="hover:scale-105 transition-transform cursor-pointer h-full">
+                  <GlassCard
+                    padding="md"
+                    className="hover:scale-105 transition-transform cursor-pointer h-full"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="p-3 rounded-lg bg-green-500/10">
                         <Users className="h-6 w-6 text-green-500" />
                       </div>
                       <div>
                         <h3 className="font-semibold">Lớp chủ nhiệm</h3>
-                        <p className="text-sm text-muted-foreground">{user.homeRoomClass}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {user.homeRoomClass}
+                        </p>
                       </div>
                     </div>
                   </GlassCard>
@@ -126,35 +136,48 @@ export default function TeacherPage() {
               )}
 
               <Link href="/teacher/class">
-                <GlassCard padding="md" className="hover:scale-105 transition-transform cursor-pointer h-full">
+                <GlassCard
+                  padding="md"
+                  className="hover:scale-105 transition-transform cursor-pointer h-full"
+                >
                   <div className="flex items-center gap-3">
                     <div className="p-3 rounded-lg bg-blue-500/10">
                       <BookOpen className="h-6 w-6 text-blue-500" />
                     </div>
                     <div>
                       <h3 className="font-semibold">Lớp giảng dạy</h3>
-                      <p className="text-sm text-muted-foreground">Quản lý lớp</p>
+                      <p className="text-sm text-muted-foreground">
+                        Quản lý lớp
+                      </p>
                     </div>
                   </div>
                 </GlassCard>
               </Link>
 
               <Link href="/teacher/nhap-diem">
-                <GlassCard padding="md" className="hover:scale-105 transition-transform cursor-pointer h-full">
+                <GlassCard
+                  padding="md"
+                  className="hover:scale-105 transition-transform cursor-pointer h-full"
+                >
                   <div className="flex items-center gap-3">
                     <div className="p-3 rounded-lg bg-purple-500/10">
                       <ClipboardList className="h-6 w-6 text-purple-500" />
                     </div>
                     <div>
                       <h3 className="font-semibold">Nhập điểm</h3>
-                      <p className="text-sm text-muted-foreground">Quản lý điểm</p>
+                      <p className="text-sm text-muted-foreground">
+                        Quản lý điểm
+                      </p>
                     </div>
                   </div>
                 </GlassCard>
               </Link>
 
               <Link href="/teacher/hanh-kiem">
-                <GlassCard padding="md" className="hover:scale-105 transition-transform cursor-pointer h-full">
+                <GlassCard
+                  padding="md"
+                  className="hover:scale-105 transition-transform cursor-pointer h-full"
+                >
                   <div className="flex items-center gap-3">
                     <div className="p-3 rounded-lg bg-orange-500/10">
                       <FileText className="h-6 w-6 text-orange-500" />
@@ -176,23 +199,37 @@ export default function TeacherPage() {
             transition={{ duration: 0.5, delay: 0.6 }}
           >
             <GlassCard padding="lg">
-              <h2 className="text-xl font-semibold mb-4">Thông tin giảng dạy</h2>
+              <h2 className="text-xl font-semibold mb-4">
+                Thông tin giảng dạy
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="font-semibold mb-2 text-muted-foreground">Môn giảng dạy</h3>
-                  <Badge variant="secondary" className="text-lg px-4 py-2">{user.subject || "N/A"}</Badge>
+                  <h3 className="font-semibold mb-2 text-muted-foreground">
+                    Môn giảng dạy
+                  </h3>
+                  <Badge variant="secondary" className="text-lg px-4 py-2">
+                    {user.subject || "N/A"}
+                  </Badge>
                 </div>
                 {user.homeRoomClass && (
                   <div>
-                    <h3 className="font-semibold mb-2 text-muted-foreground">Lớp chủ nhiệm</h3>
-                    <Badge variant="secondary" className="text-lg px-4 py-2">{user.homeRoomClass}</Badge>
+                    <h3 className="font-semibold mb-2 text-muted-foreground">
+                      Lớp chủ nhiệm
+                    </h3>
+                    <Badge variant="secondary" className="text-lg px-4 py-2">
+                      {user.homeRoomClass}
+                    </Badge>
                   </div>
                 )}
                 <div>
-                  <h3 className="font-semibold mb-2 text-muted-foreground">Các lớp giảng dạy</h3>
+                  <h3 className="font-semibold mb-2 text-muted-foreground">
+                    Các lớp giảng dạy
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {user.classes.map((cls) => (
-                      <Badge key={cls} variant="outline">{cls}</Badge>
+                      <Badge key={cls} variant="outline">
+                        {cls}
+                      </Badge>
                     ))}
                   </div>
                 </div>
