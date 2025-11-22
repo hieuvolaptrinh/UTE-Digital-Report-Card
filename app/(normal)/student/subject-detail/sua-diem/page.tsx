@@ -53,6 +53,7 @@ export default function GradeEditRequestPage() {
   const router = useRouter();
   const [scoreType, setScoreType] = useState("");
   const [reason, setReason] = useState("");
+  const [proposedScore, setProposedScore] = useState("");
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [evidencePreview, setEvidencePreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -293,6 +294,37 @@ export default function GradeEditRequestPage() {
                     </p>
                   </div>
 
+                  {/* Proposed Score */}
+                  <div className="space-y-2">
+                    <Label htmlFor="proposedScore">Điểm đề xuất *</Label>
+                    <Input
+                      id="proposedScore"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10"
+                      placeholder="Nhập điểm bạn cho rằng đúng (0-10)"
+                      value={proposedScore}
+                      onChange={(e) => setProposedScore(e.target.value)}
+                      required
+                    />
+                    {scoreType && proposedScore && (
+                      <div className="flex items-center gap-2 text-sm bg-blue-500/10 text-blue-600 dark:text-blue-400 p-2 rounded">
+                        <span>Điểm hiện tại:</span>
+                        <Badge variant="outline" className="font-semibold">
+                          {getCurrentScore()}
+                        </Badge>
+                        <span>→</span>
+                        <Badge
+                          variant="outline"
+                          className="font-semibold bg-green-500/10 text-green-600"
+                        >
+                          {proposedScore}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Evidence Upload */}
                   <div className="space-y-2">
                     <Label htmlFor="evidence">Hình ảnh minh chứng</Label>
@@ -359,7 +391,9 @@ export default function GradeEditRequestPage() {
                   <div className="flex gap-3 pt-4">
                     <Button
                       type="submit"
-                      disabled={isSubmitting || !scoreType || !reason}
+                      disabled={
+                        isSubmitting || !scoreType || !reason || !proposedScore
+                      }
                       className="flex-1"
                     >
                       {isSubmitting ? (

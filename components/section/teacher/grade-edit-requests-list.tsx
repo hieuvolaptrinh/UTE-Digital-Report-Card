@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { mockGradeEditRequests, GradeEditRequest } from "@/mork-data";
-import { FileText, Eye, Clock, CheckCircle, XCircle } from "lucide-react";
+import {
+  FileText,
+  Eye,
+  Clock,
+  CheckCircle,
+  XCircle,
+  ImageIcon,
+} from "lucide-react";
 
 export function GradeEditRequestsList() {
   const [requests, setRequests] = useState<GradeEditRequest[]>(
@@ -141,6 +149,7 @@ export function GradeEditRequestsList() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
+                      {/* Dialog xem chi tiết */}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -153,12 +162,13 @@ export function GradeEditRequestsList() {
                             Chi tiết
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
+                        <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
+                          <DialogHeader className="flex-shrink-0">
                             <DialogTitle>Chi tiết yêu cầu sửa điểm</DialogTitle>
                           </DialogHeader>
+
                           {selectedRequest && (
-                            <div className="space-y-4">
+                            <div className="flex-1 mt-4 space-y-4 overflow-y-auto pr-2">
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <p className="text-sm text-muted-foreground">
@@ -262,6 +272,31 @@ export function GradeEditRequestsList() {
                               </div>
 
                               <div className="border-t pt-4">
+                                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                  <ImageIcon className="h-4 w-4" />
+                                  Hình ảnh bài kiểm tra
+                                </h4>
+                                <div className="bg-muted/30 rounded-lg p-4">
+                                  <div className="relative w-full max-w-2xl mx-auto">
+                                    {/* Container chiếm chiều cao theo viewport, nội dung cuộn được */}
+                                    <div className="max-h-[50vh] overflow-auto rounded-md border-2 border-border shadow-lg">
+                                      <Image
+                                        src="/baiktr.jpg"
+                                        alt="Bài kiểm tra"
+                                        width={800}
+                                        height={600}
+                                        className="w-full h-auto"
+                                        priority
+                                      />
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                                    Bài kiểm tra do học sinh tải lên
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="border-t pt-4">
                                 <div className="text-sm text-muted-foreground">
                                   <p>
                                     Người gửi: {selectedRequest.teacherName}
@@ -330,7 +365,7 @@ export function GradeEditRequestsList() {
                         open={showRejectDialog}
                         onOpenChange={setShowRejectDialog}
                       >
-                        <DialogContent>
+                        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Từ chối yêu cầu sửa điểm</DialogTitle>
                           </DialogHeader>
