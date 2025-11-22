@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth, isTeacher } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";

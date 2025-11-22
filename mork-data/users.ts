@@ -129,6 +129,22 @@ export const mockUsers: (StudentUser | TeacherUser | ParentUser)[] = [
     gender: "male",
   },
 
+  // Academic Officer - Can manage all academic records
+  {
+    id: "AO001",
+    username: "academic",
+    password: "123456",
+    email: "academic@ute.udn.vn",
+    name: "Lê Thị Cán Bộ Học Vụ",
+    role: "academic-officer",
+    teacherId: "CBHV001",
+    classes: ["10A1", "10A2", "11A1", "11A2", "12A1", "12A2"],
+    phone: "0912345680",
+    dateOfBirth: "1980-03-20",
+    gender: "female",
+    address: "TP. Hồ Chí Minh",
+  },
+
   // Principal - Can see everything
   {
     id: "P000",
