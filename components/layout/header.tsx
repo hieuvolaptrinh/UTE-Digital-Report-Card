@@ -360,15 +360,7 @@ export function Header({ user, onLogout, className }: HeaderProps) {
                       Thông tin cá nhân
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/profile/change-password"
-                      className="cursor-pointer flex items-center gap-2"
-                    >
-                      <Lock className="h-4 w-4" />
-                      Đổi mật khẩu
-                    </Link>
-                  </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={onLogout}

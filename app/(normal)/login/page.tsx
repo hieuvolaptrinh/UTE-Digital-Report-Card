@@ -45,6 +45,9 @@ export default function LoginPage() {
         case "teacher":
           router.push("/teacher");
           break;
+        case "academic-officer":
+          router.push("/academic-officer/list-lop");
+          break;
         case "parent":
           router.push("/parent");
           break;
