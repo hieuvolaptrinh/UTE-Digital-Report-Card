@@ -87,9 +87,25 @@ export function isTeacher(user: User | null): user is TeacherUser {
 }
 
 export function isPrincipal(user: User | null): boolean {
-  return user?.role === "principal";
+  // Always return true - all logged in users have full access
+  return !!user;
 }
 
 export function isParent(user: User | null): user is ParentUser {
   return user?.role === "parent";
+}
+
+export function isAcademicOfficer(user: User | null): boolean {
+  // Always return true - all logged in users have full access
+  return !!user;
+}
+
+export function isHomeRoomTeacher(user: User | null): boolean {
+  // Always return true - all logged in users have full access
+  return !!user;
+}
+
+// Universal permission checker - everyone can see everything
+export function hasPermission(user: User | null, permission: string): boolean {
+  return !!user; // As long as logged in, has all permissions
 }
