@@ -9,10 +9,10 @@ import { Footer } from "@/components/layout/footer";
 import { GlassCard } from "@/components/ui/glass-card";
 import { StatCard } from "@/components/shared/stat-card";
 import { ChildrenList } from "@/components/section/parent/children-list";
-import { LeaveRequestForm } from "@/components/section/parent/leave-request-form";
+
 import { NotificationsList } from "@/components/section/parent/notifications-list";
 import { mockNotifications, Notification } from "@/mork-data";
-import { Users, Bell, FileText, Calendar } from "lucide-react";
+import { Users, Bell, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -51,7 +51,7 @@ export default function ParentPage() {
     name: user.name,
     email: user.email,
     avatar: user.avatar,
-    role: user.role as any,
+    role: user.role as "parent",
   };
 
   const unreadNotifications = notifications.filter((n) => !n.isRead).length;
@@ -59,7 +59,7 @@ export default function ParentPage() {
   return (
     <>
       <Header user={headerUser} onLogout={logout} />
-      <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <main className="min-h-screen bg-linear-to-br from-green-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
         <div className="container mx-auto px-4 py-6 sm:py-8">
           {/* Header */}
           <motion.div
@@ -107,10 +107,10 @@ export default function ParentPage() {
               delay={0.2}
             />
             <StatCard
-              title="Lịch họp PH"
-              value={1}
-              icon={Calendar}
-              description="Tháng này"
+              title="Tin nhắn mới"
+              value={2}
+              icon={Users}
+              description="Từ GVCN"
               color="green"
               delay={0.3}
             />
@@ -144,14 +144,24 @@ export default function ParentPage() {
                     <span className="text-sm">Thông báo</span>
                   </Button>
                 </Link>
-                <Button variant="outline" className="w-full gap-2 h-auto py-3">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-sm">Lịch họp</span>
-                </Button>
-                <Button variant="outline" className="w-full gap-2 h-auto py-3">
-                  <Users className="h-4 w-4" />
-                  <span className="text-sm">Liên hệ GV</span>
-                </Button>
+                <Link href="/parent/contact">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 h-auto py-3"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm">Liên hệ GVCN</span>
+                  </Button>
+                </Link>
+                <Link href="/parent/child">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 h-auto py-3"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm">Xem điểm</span>
+                  </Button>
+                </Link>
               </div>
             </GlassCard>
           </motion.div>
