@@ -39,6 +39,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { StudentNotificationBell } from "@/components/layout/student-notification-bell";
 
 // Types
 export type UserRole =
@@ -301,6 +302,9 @@ export function Header({ user, onLogout, className }: HeaderProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+
+            {/* Notification Bell for Students */}
+            {user && user.role === "student" && <StudentNotificationBell />}
 
             {/* User Menu */}
             {user ? (
