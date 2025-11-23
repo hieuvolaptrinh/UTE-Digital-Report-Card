@@ -114,6 +114,13 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
       icon: MessageSquare,
       roles: ["teacher", "academic-officer", "principal"],
     },
+    {
+      label: "Đơn xin vắng học",
+      href: "/teacher/xin-vang-hoc",
+      icon: FileText,
+      badge: 2,
+      roles: ["teacher", "principal"],
+    },
   ];
 
   // Academic Officer items

@@ -44,7 +44,7 @@ export function ChildrenList({ parent }: ChildrenListProps) {
                   </span>
                 </div>
               </div>
-              <Link href={`/parent/child/${child.studentId}`}>
+              <Link href="/parent/child">
                 <Button variant="ghost" size="sm" className="gap-2">
                   Xem chi tiết
                   <ChevronRight className="h-4 w-4" />

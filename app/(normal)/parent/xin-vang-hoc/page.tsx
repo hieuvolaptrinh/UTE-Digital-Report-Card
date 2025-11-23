@@ -9,7 +9,6 @@ import { Footer } from "@/components/layout/footer";
 import { LeaveRequestForm } from "@/components/section/parent/leave-request-form";
 import { GlassCard } from "@/components/ui/glass-card";
 import { FileText, AlertCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 export default function LeaveRequestPage() {
   const { user, isLoading, logout } = useAuth();
@@ -43,8 +42,7 @@ export default function LeaveRequestPage() {
       reason: "Em bị ốm, cần nghỉ học để điều trị",
       fromDate: "18/12/2024",
       toDate: "18/12/2024",
-      status: "approved",
-      reviewNote: "Đồng ý cho nghỉ. Nhớ bù bài tập khi trở lại.",
+      submittedDate: "17/12/2024",
     },
     {
       id: "LR002",
@@ -52,8 +50,15 @@ export default function LeaveRequestPage() {
       reason: "Gia đình có việc đột xuất",
       fromDate: "20/12/2024",
       toDate: "21/12/2024",
-      status: "pending",
-      reviewNote: "",
+      submittedDate: "19/12/2024",
+    },
+    {
+      id: "LR003",
+      studentName: user.children[0]?.name || "",
+      reason: "Đi chơi công viên với gia đình",
+      fromDate: "22/12/2024",
+      toDate: "22/12/2024",
+      submittedDate: "22/12/2024",
     },
   ];
 
@@ -115,21 +120,6 @@ export default function LeaveRequestPage() {
                             Mã đơn: {request.id}
                           </p>
                         </div>
-                        <Badge
-                          variant={
-                            request.status === "approved"
-                              ? "default"
-                              : request.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                          }
-                        >
-                          {request.status === "approved"
-                            ? "Đã duyệt"
-                            : request.status === "pending"
-                            ? "Chờ duyệt"
-                            : "Từ chối"}
-                        </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
                         {request.reason}
@@ -137,12 +127,9 @@ export default function LeaveRequestPage() {
                       <div className="text-xs text-muted-foreground">
                         Từ {request.fromDate} đến {request.toDate}
                       </div>
-                      {request.reviewNote && (
-                        <div className="mt-2 p-2 rounded bg-blue-500/10 text-xs">
-                          <span className="font-medium">Phản hồi: </span>
-                          {request.reviewNote}
-                        </div>
-                      )}
+                      <div className="text-xs text-muted-foreground mt-2">
+                        Gửi lúc: {request.submittedDate}
+                      </div>
                     </div>
                   ))}
                 </div>

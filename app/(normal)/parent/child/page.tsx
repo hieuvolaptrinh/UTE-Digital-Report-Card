@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth, isParent } from "@/lib/auth";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/layout/header";
@@ -17,24 +17,101 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockGrades, Grade } from "@/mork-data";
+import { Grade } from "@/mork-data";
 import { ArrowLeft, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+// Hard-coded grade data
+const HARDCODED_GRADES: Grade[] = [
+  {
+    studentId: "SV001",
+    subjectId: "MATH001",
+    subjectName: "Toán học",
+    teacherName: "Nguyễn Văn Minh",
+    academicYear: "2024-2025",
+    semester: 1,
+    scores: {
+      oral: [8, 9, 8.5],
+      test15min: [8.5, 9],
+      test45min: [8, 8.5],
+      midterm: 8.5,
+      final: 9,
+    },
+    average: 8.6,
+  },
+  {
+    studentId: "SV001",
+    subjectId: "PHY001",
+    subjectName: "Vật lý",
+    teacherName: "Trần Thị Lan",
+    academicYear: "2024-2025",
+    semester: 1,
+    scores: {
+      oral: [9, 9.5, 9],
+      test15min: [9, 9.5],
+      test45min: [9, 9.5],
+      midterm: 9,
+      final: 9.5,
+    },
+    average: 9.2,
+  },
+  {
+    studentId: "SV001",
+    subjectId: "CHEM001",
+    subjectName: "Hóa học",
+    teacherName: "Lê Văn Tùng",
+    academicYear: "2024-2025",
+    semester: 1,
+    scores: {
+      oral: [7, 7.5, 8],
+      test15min: [7.5, 8],
+      test45min: [7, 7.5],
+      midterm: 7.5,
+      final: 8,
+    },
+    average: 7.6,
+  },
+  {
+    studentId: "SV001",
+    subjectId: "LIT001",
+    subjectName: "Ngữ văn",
+    teacherName: "Hoàng Thị Hoa",
+    academicYear: "2024-2025",
+    semester: 1,
+    scores: {
+      oral: [8.5, 9, 8.5],
+      test15min: [8.5, 9],
+      test45min: [8.5, 9],
+      midterm: 8.5,
+      final: 9,
+    },
+    average: 8.8,
+  },
+  {
+    studentId: "SV001",
+    subjectId: "ENG001",
+    subjectName: "Tiếng Anh",
+    teacherName: "Đỗ Văn Nam",
+    academicYear: "2024-2025",
+    semester: 1,
+    scores: {
+      oral: [9, 9.5, 9.5],
+      test15min: [9.5, 9],
+      test45min: [9, 9.5],
+      midterm: 9.5,
+      final: 9.5,
+    },
+    average: 9.3,
+  },
+];
+
 export default function ChildDetailPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const childId = params.child as string;
   const [academicYear, setAcademicYear] = useState("2024-2025");
   const [semester, setSemester] = useState<1 | 2>(1);
   const [childGrades, setChildGrades] = useState<Grade[]>([]);
-  const [childInfo, setChildInfo] = useState<{
-    name: string;
-    class: string;
-    studentId: string;
-  } | null>(null);
 
   useEffect(() => {
     if (!isLoading && (!user || !isParent(user))) {
@@ -42,37 +119,28 @@ export default function ChildDetailPage() {
     }
 
     if (user && isParent(user)) {
-      // Find child info
-      const child = user.children.find((c) => c.studentId === childId);
-      if (!child) {
-        router.push("/parent");
-        return;
-      }
-
-      setChildInfo({
-        name: child.name,
-        class: child.class,
-        studentId: child.studentId,
-      });
-
-      // Load grades for this child - hard coded
-      const grades = mockGrades.filter(
-        (g) =>
-          g.studentId === child.studentId &&
-          g.academicYear === academicYear &&
-          g.semester === semester
+      // Load hard-coded grades (same for all children)
+      const grades = HARDCODED_GRADES.filter(
+        (g) => g.academicYear === academicYear && g.semester === semester
       );
       setChildGrades(grades);
     }
-  }, [user, isLoading, router, childId, academicYear, semester]);
+  }, [user, isLoading, router, academicYear, semester]);
 
-  if (isLoading || !user || !isParent(user) || !childInfo) {
+  if (isLoading || !user || !isParent(user)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
+
+  // Hard-coded child info (same for display)
+  const childInfo = {
+    name: user.children[0]?.name || "Học sinh",
+    class: user.children[0]?.class || "10A1",
+    studentId: user.children[0]?.studentId || "SV001",
+  };
 
   const headerUser = {
     name: user.name,
