@@ -214,7 +214,7 @@ export default function StudentGradePage() {
               </div>
               <Button onClick={() => setDialogOpen(true)} size="lg">
                 <Edit className="h-4 w-4 mr-2" />
-                Nhập điểm
+                Yêu cầu sửa điểm
               </Button>
             </div>
           </motion.div>

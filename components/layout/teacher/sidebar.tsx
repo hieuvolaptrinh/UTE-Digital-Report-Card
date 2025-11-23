@@ -22,7 +22,6 @@ import {
   FileText,
   School,
   GraduationCap,
-  ClipboardList,
   TrendingUp,
   FolderOpen,
 } from "lucide-react";
@@ -129,6 +128,12 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
           label: "Tổng quan",
           href: "/academic-officer",
           icon: BarChart3,
+          roles: ["academic-officer"],
+        },
+        {
+          label: "Thời gian nhập & sửa điểm",
+          href: "/academic-officer/tg-nhapdiem-sua-diem",
+          icon: Calendar,
           roles: ["academic-officer"],
         },
         {

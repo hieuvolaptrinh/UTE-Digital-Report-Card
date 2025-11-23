@@ -76,7 +76,7 @@ export function StudentConductDialog({
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <User className="h-6 w-6 text-primary" />
-            Thông tin & Đánh giá học sinh
+            Hạnh Kiểm và Nhận Xét Học Sinh
           </DialogTitle>
           <DialogDescription>
             Xem chi tiết và cập nhật hạnh kiểm, nhận xét cho học sinh
