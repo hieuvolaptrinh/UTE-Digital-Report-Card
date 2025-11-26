@@ -213,7 +213,7 @@ export function Footer({ className }: FooterProps) {
           >
             © {new Date().getFullYear()}{" "}
             <span className="font-semibold text-foreground">
-              Trường Đại học Sư phạm Kỹ thuật TP.HCM
+              Trường Đại học Sư phạm Kỹ thuật
             </span>
             . All rights reserved.
           </motion.p>

@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import {
@@ -44,6 +51,20 @@ export default function ProfilePage() {
     dateOfBirth: user?.dateOfBirth || "",
   });
 
+  // Address components
+  interface LocationItem {
+    name: string;
+    code: number;
+    districts?: LocationItem[];
+    wards?: LocationItem[];
+  }
+  const [provinces, setProvinces] = useState<LocationItem[]>([]);
+  const [wards, setWards] = useState<LocationItem[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedWard, setSelectedWard] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -55,6 +76,44 @@ export default function ProfilePage() {
       router.push("/login");
     }
   }, [user, isLoading, router]);
+
+  // Fetch provinces with wards on mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      setLoadingProvinces(true);
+      try {
+        const response = await fetch(
+          "https://provinces.open-api.vn/api/v2/?depth=2"
+        );
+        const data = await response.json();
+        console.log("Provinces with wards loaded:", data.length);
+        setProvinces(data);
+      } catch (error) {
+        console.error("Error fetching provinces:", error);
+      } finally {
+        setLoadingProvinces(false);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // Update wards when province changes
+  useEffect(() => {
+    if (selectedProvince) {
+      const province = provinces.find(
+        (p) => p.code.toString() === selectedProvince
+      );
+      console.log("Selected province:", province);
+      // Get wards directly from province
+      const wardsList = province?.wards || [];
+      setWards(wardsList);
+      setSelectedWard("");
+      console.log("Wards set:", wardsList.length, "items");
+    } else {
+      setWards([]);
+      setSelectedWard("");
+    }
+  }, [selectedProvince, provinces]);
 
   if (isLoading || !user) {
     return (
@@ -102,13 +161,18 @@ export default function ProfilePage() {
     name: user.name,
     email: user.email,
     avatar: user.avatar,
-    role: user.role as any,
+    role: user.role as
+      | "student"
+      | "teacher"
+      | "principal"
+      | "academic-officer"
+      | "parent",
   };
 
   return (
     <>
       <Header user={headerUser} onLogout={logout} />
-      <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <main className="min-h-screen bg-linear-to-br from-orange-50 via-white to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="container mx-auto px-4 py-6 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -203,7 +267,7 @@ export default function ProfilePage() {
                             name: e.target.value,
                           })
                         }
-                        className="bg-white/50 dark:bg-gray-800/50"
+                        className="bg-white/50 dark:bg-gray-800/50 border-2 border-black"
                       />
                     </div>
 
@@ -226,7 +290,7 @@ export default function ProfilePage() {
                             email: e.target.value,
                           })
                         }
-                        className="bg-white/50 dark:bg-gray-800/50"
+                        className="bg-white/50 dark:bg-gray-800/50 border-2 border-black"
                       />
                     </div>
 
@@ -248,7 +312,7 @@ export default function ProfilePage() {
                             phone: e.target.value,
                           })
                         }
-                        className="bg-white/50 dark:bg-gray-800/50"
+                        className="bg-white/50 dark:bg-gray-800/50 border-2 border-black"
                       />
                     </div>
 
@@ -271,30 +335,101 @@ export default function ProfilePage() {
                             dateOfBirth: e.target.value,
                           })
                         }
-                        className="bg-white/50 dark:bg-gray-800/50"
+                        className="bg-white/50 dark:bg-gray-800/50 border-2 border-black"
                       />
                     </div>
 
                     {/* Địa chỉ */}
-                    <div className="space-y-2 md:col-span-2">
-                      <Label
-                        htmlFor="address"
-                        className="flex items-center gap-2"
-                      >
+                    <div className="space-y-4 md:col-span-2">
+                      <Label className="flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
                         Địa chỉ
                       </Label>
-                      <Input
-                        id="address"
-                        value={profileData.address}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            address: e.target.value,
-                          })
-                        }
-                        className="bg-white/50 dark:bg-gray-800/50"
-                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Quốc gia */}
+                        <div className="space-y-2">
+                          <Label htmlFor="country">Quốc gia</Label>
+                          <Input
+                            id="country"
+                            value="Việt Nam"
+                            disabled
+                            className="bg-white/50 dark:bg-gray-800/50 border-2 border-black"
+                          />
+                        </div>
+
+                        {/* Tỉnh/Thành phố */}
+                        <div className="space-y-2">
+                          <Label htmlFor="province">Tỉnh/Thành phố</Label>
+                          <Select
+                            value={selectedProvince}
+                            onValueChange={setSelectedProvince}
+                            disabled={loadingProvinces}
+                          >
+                            <SelectTrigger
+                              id="province"
+                              className="bg-white/50 dark:bg-gray-800/50 border-2 border-black"
+                            >
+                              <SelectValue
+                                placeholder={
+                                  loadingProvinces
+                                    ? "Đang tải..."
+                                    : "Chọn tỉnh/thành phố"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {provinces.map((province) => (
+                                <SelectItem
+                                  key={province.code}
+                                  value={province.code.toString()}
+                                >
+                                  {province.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Phường/Xã */}
+                        <div className="space-y-2">
+                          <Label htmlFor="ward">Phường/Xã</Label>
+                          <Select
+                            value={selectedWard}
+                            onValueChange={setSelectedWard}
+                            disabled={!selectedProvince || wards.length === 0}
+                          >
+                            <SelectTrigger
+                              id="ward"
+                              className="bg-white/50 dark:bg-gray-800/50 border-2 border-black"
+                            >
+                              <SelectValue placeholder="Chọn phường/xã" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {wards.map((ward) => (
+                                <SelectItem
+                                  key={ward.code}
+                                  value={ward.code.toString()}
+                                >
+                                  {ward.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Số nhà, tên đường */}
+                      <div className="space-y-2">
+                        <Label htmlFor="streetAddress">Số nhà, tên đường</Label>
+                        <Input
+                          id="streetAddress"
+                          placeholder="VD: 01 Võ Văn Ngân"
+                          value={streetAddress}
+                          onChange={(e) => setStreetAddress(e.target.value)}
+                          className="bg-white/50 dark:bg-gray-800/50 border-2 border-black"
+                        />
+                      </div>
                     </div>
                   </div>
 

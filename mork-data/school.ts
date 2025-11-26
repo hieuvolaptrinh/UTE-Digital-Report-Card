@@ -44,15 +44,15 @@ export interface SchoolStats {
 
 export const schoolInfo: SchoolInfo = {
   name: "UTE",
-  fullName: "Trường Đại học Sư phạm Kỹ thuật TP. Hồ Chí Minh",
-  address: "01 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh",
+  fullName: "Trường Đại học Sư phạm Kỹ thuật ",
+  address: "Hải Châu, Đà Nẵng, Việt Nam",
   phone: "(028) 3897 2092",
   email: "dhspkt@ute.udn.vn",
   website: "https://www.ute.udn.vn",
   founded: 1962,
   motto: "Đào tạo - Nghiên cứu - Ứng dụng",
   description:
-    "Trường Đại học Sư phạm Kỹ thuật TP.HCM là cơ sở đào tạo giáo viên kỹ thuật, công nghệ hàng đầu Việt Nam. Với hơn 60 năm xây dựng và phát triển, nhà trường đã đào tạo hàng vạn cử nhân, kỹ sư, thạc sĩ, tiến sĩ trong các lĩnh vực kỹ thuật và công nghệ.",
+    " là cơ sở đào tạo giáo viên kỹ thuật, công nghệ hàng đầu Việt Nam. Với hơn 60 năm xây dựng và phát triển, nhà trường đã đào tạo hàng vạn cử nhân, kỹ sư, thạc sĩ, tiến sĩ trong các lĩnh vực kỹ thuật và công nghệ.",
   principal: {
     name: "PGS.TS. Trần Minh Phương",
     title: "Hiệu trưởng",
