@@ -102,20 +102,6 @@ export default function GradeDeadlineManagementPage() {
     });
   }, [deadlines, searchTerm, filterGrade, filterSemester, filterStatus]);
 
-  // Handle edit deadline
-  const handleEditDeadline = (deadline: GradeDeadline) => {
-    setEditingDeadline(deadline);
-    setFormData({
-      subject: deadline.subject,
-      grade: deadline.grade,
-      semester: deadline.semester,
-      entryStartDate: deadline.entryStartDate,
-      entryEndDate: deadline.entryEndDate,
-      editEndDate: deadline.editEndDate,
-    });
-    setDialogOpen(true);
-  };
-
   // Handle save deadline
   const handleSaveDeadline = () => {
     if (editingDeadline) {
@@ -237,6 +223,24 @@ export default function GradeDeadlineManagementPage() {
               Thiết lập thời gian nhập điểm và sửa điểm theo môn học, khối
             </p>
           </div>
+          <Button
+            onClick={() => {
+              setEditingDeadline(null);
+              setFormData({
+                subject: "",
+                grade: "",
+                semester: 1,
+                entryStartDate: new Date(),
+                entryEndDate: new Date(),
+                editEndDate: calculateEditDeadline(new Date()),
+              });
+              setDialogOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Thêm thời gian nhập & sửa điểm
+          </Button>
         </motion.div>
 
         {/* Stats Cards */}
@@ -417,11 +421,7 @@ export default function GradeDeadlineManagementPage() {
                         <TableCell>{getStatusBadge(deadline.status)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditDeadline(deadline)}
-                            >
+                            <Button variant="ghost" size="icon">
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button

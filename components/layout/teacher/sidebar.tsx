@@ -121,6 +121,13 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
       badge: 2,
       roles: ["teacher", "principal"],
     },
+    {
+      label: "Tin nhắn phụ huynh",
+      href: "/teacher/tra-loi-tin-nhan-tu-phu-huynh",
+      icon: MessageSquare,
+      badge: 4,
+      roles: ["teacher", "principal"],
+    },
   ];
 
   // Academic Officer items
