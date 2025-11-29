@@ -10,30 +10,19 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Upload,
-  Users,
-  Search,
-  ChevronRight,
-  GraduationCap,
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Upload, Users, Search, ChevronRight, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 interface ClassInfo {
   id: string;
@@ -41,7 +30,8 @@ interface ClassInfo {
   grade: number;
   studentCount: number;
   homeroomTeacher: string;
-  averageGrade: number;
+
+  schoolYear: string;
 }
 
 const mockClasses: ClassInfo[] = [
@@ -51,7 +41,7 @@ const mockClasses: ClassInfo[] = [
     grade: 10,
     studentCount: 35,
     homeroomTeacher: "Phạm Văn D",
-    averageGrade: 8.2,
+    schoolYear: "2024-2025",
   },
   {
     id: "10A2",
@@ -59,7 +49,7 @@ const mockClasses: ClassInfo[] = [
     grade: 10,
     studentCount: 33,
     homeroomTeacher: "Lê Văn K",
-    averageGrade: 7.8,
+    schoolYear: "2024-2025",
   },
   {
     id: "10A3",
@@ -67,7 +57,7 @@ const mockClasses: ClassInfo[] = [
     grade: 10,
     studentCount: 34,
     homeroomTeacher: "Nguyễn Thị L",
-    averageGrade: 8.0,
+    schoolYear: "2024-2025",
   },
   {
     id: "11A1",
@@ -75,7 +65,7 @@ const mockClasses: ClassInfo[] = [
     grade: 11,
     studentCount: 32,
     homeroomTeacher: "Nguyễn Thị M",
-    averageGrade: 8.0,
+    schoolYear: "2024-2025",
   },
   {
     id: "11A2",
@@ -83,7 +73,7 @@ const mockClasses: ClassInfo[] = [
     grade: 11,
     studentCount: 34,
     homeroomTeacher: "Trần Văn F",
-    averageGrade: 8.5,
+    schoolYear: "2024-2025",
   },
   {
     id: "11A3",
@@ -91,7 +81,7 @@ const mockClasses: ClassInfo[] = [
     grade: 11,
     studentCount: 31,
     homeroomTeacher: "Võ Thị N",
-    averageGrade: 7.9,
+    schoolYear: "2023-2024",
   },
   {
     id: "12A1",
@@ -99,7 +89,7 @@ const mockClasses: ClassInfo[] = [
     grade: 12,
     studentCount: 30,
     homeroomTeacher: "Nguyễn Văn H",
-    averageGrade: 8.3,
+    schoolYear: "2023-2024",
   },
   {
     id: "12A2",
@@ -107,7 +97,7 @@ const mockClasses: ClassInfo[] = [
     grade: 12,
     studentCount: 31,
     homeroomTeacher: "Võ Thị N",
-    averageGrade: 7.9,
+    schoolYear: "2023-2024",
   },
   {
     id: "12A3",
@@ -115,7 +105,7 @@ const mockClasses: ClassInfo[] = [
     grade: 12,
     studentCount: 29,
     homeroomTeacher: "Đặng Văn P",
-    averageGrade: 8.1,
+    schoolYear: "2023-2024",
   },
 ];
 
@@ -124,6 +114,9 @@ export default function ClassListPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const [schoolYearFilter, setSchoolYearFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -140,13 +133,13 @@ export default function ClassListPage() {
   }
 
   const filteredClasses = mockClasses.filter((classItem) => {
-    const matchesSearch = classItem.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesGrade =
-      gradeFilter === "all" || classItem.grade === parseInt(gradeFilter);
-    return matchesSearch && matchesGrade;
+    const matchesSearch = classItem.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGrade = gradeFilter === "all" || classItem.grade === parseInt(gradeFilter);
+    const matchesSchoolYear = schoolYearFilter === "all" || classItem.schoolYear === schoolYearFilter;
+    return matchesSearch && matchesGrade && matchesSchoolYear;
   });
+
+  const paginatedClasses = filteredClasses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleImportExcel = () => {
     // Trigger file input
@@ -188,6 +181,9 @@ export default function ClassListPage() {
     },
   ];
 
+  // Calculate total pages based on itemsPerPage
+  const totalPages = Math.ceil(filteredClasses.length / itemsPerPage);
+
   return (
     <>
       <Header
@@ -202,17 +198,11 @@ export default function ClassListPage() {
       <main className="min-h-screen bg-linear-to-br from-orange-50 via-white to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="container mx-auto px-4 py-6">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
             <h1 className="text-3xl font-bold bg-linear-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent">
               Danh sách lớp học
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Quản lý và xem chi tiết các lớp học trong trường
-            </p>
+            <p className="text-muted-foreground mt-2">Quản lý và xem chi tiết các lớp học trong trường</p>
           </motion.div>
 
           {/* Stats */}
@@ -226,12 +216,8 @@ export default function ClassListPage() {
               >
                 <GlassCard padding="md">
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {stat.label}
-                    </p>
-                    <p className={cn("text-3xl font-bold", stat.color)}>
-                      {stat.value}
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+                    <p className={cn("text-3xl font-bold", stat.color)}>{stat.value}</p>
                   </div>
                 </GlassCard>
               </motion.div>
@@ -239,11 +225,7 @@ export default function ClassListPage() {
           </div>
 
           {/* Filters and Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <GlassCard padding="lg">
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1 relative">
@@ -255,8 +237,8 @@ export default function ClassListPage() {
                     className="pl-10"
                   />
                 </div>
-                <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                  <SelectTrigger className="w-full md:w-[180px]">
+                <Select value={gradeFilter} onValueChange={setGradeFilter} className="w-full md:w-[180px]">
+                  <SelectTrigger>
                     <SelectValue placeholder="Chọn khối" />
                   </SelectTrigger>
                   <SelectContent>
@@ -264,6 +246,16 @@ export default function ClassListPage() {
                     <SelectItem value="10">Khối 10</SelectItem>
                     <SelectItem value="11">Khối 11</SelectItem>
                     <SelectItem value="12">Khối 12</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={schoolYearFilter} onValueChange={setSchoolYearFilter} className="w-full md:w-[180px]">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn năm học" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả năm học</SelectItem>
+                    <SelectItem value="2023-2024">2023-2024</SelectItem>
+                    <SelectItem value="2024-2025">2024-2025</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
@@ -284,12 +276,12 @@ export default function ClassListPage() {
                       <TableHead>Khối</TableHead>
                       <TableHead>Sĩ số</TableHead>
                       <TableHead>GVCN</TableHead>
-                      <TableHead>Điểm TB</TableHead>
+                      <TableHead>Năm học</TableHead>
                       <TableHead className="text-right">Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredClasses.map((classItem, index) => (
+                    {paginatedClasses.map((classItem, index) => (
                       <motion.tr
                         key={classItem.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -306,9 +298,7 @@ export default function ClassListPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
-                            Khối {classItem.grade}
-                          </Badge>
+                          <Badge variant="outline">Khối {classItem.grade}</Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -317,21 +307,9 @@ export default function ClassListPage() {
                           </div>
                         </TableCell>
                         <TableCell>{classItem.homeroomTeacher}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              classItem.averageGrade >= 8
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {classItem.averageGrade.toFixed(1)}
-                          </Badge>
-                        </TableCell>
+                        <TableCell>{classItem.schoolYear}</TableCell>
                         <TableCell className="text-right">
-                          <Link
-                            href={`/academic-officer/list-lop/${classItem.id}`}
-                          >
+                          <Link href={`/academic-officer/list-lop/${classItem.id}`}>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -351,9 +329,35 @@ export default function ClassListPage() {
               {filteredClasses.length === 0 && (
                 <div className="text-center py-12">
                   <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    Không tìm thấy lớp học nào
-                  </p>
+                  <p className="text-muted-foreground">Không tìm thấy lớp học nào</p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {filteredClasses.length > 0 && (
+                <div className="mt-4">
+                  <Pagination className="mt-4">
+                    <PaginationContent>
+                      <PaginationPrevious
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                      />
+                      {Array.from({ length: totalPages }, (_, index) => (
+                        <PaginationItem key={index}>
+                          <PaginationLink
+                            isActive={currentPage === index + 1}
+                            onClick={() => setCurrentPage(index + 1)}
+                          >
+                            {index + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationNext
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                      />
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </GlassCard>

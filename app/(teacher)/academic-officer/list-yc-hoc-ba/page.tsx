@@ -21,6 +21,15 @@ import {
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GraduationCap, Check, X, Eye, Filter } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
+
 interface TranscriptRequest {
   id: string;
   studentId: string;
@@ -145,6 +154,8 @@ export default function TranscriptRequestsPage() {
   const [filterSchoolYear, setFilterSchoolYear] = useState<string>("all");
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -261,6 +272,10 @@ export default function TranscriptRequestsPage() {
     confirmed: "Đã xác nhận",
     rejected: "Từ chối",
   };
+
+  const paginatedRequests = filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
   return (
     <>
@@ -415,7 +430,7 @@ export default function TranscriptRequestsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredRequests.map((request) => (
+                      {paginatedRequests.map((request) => (
                         <tr key={request.id} className="border-t">
                           <td className="py-3 pr-4">
                             <input
@@ -486,6 +501,27 @@ export default function TranscriptRequestsPage() {
               </GlassCard>
             )}
           </motion.div>
+
+          {/* Pagination Controls */}
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationPrevious
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              />
+              {Array.from({ length: totalPages }, (_, index) => (
+                <PaginationItem key={index}>
+                  <PaginationLink isActive={currentPage === index + 1} onClick={() => setCurrentPage(index + 1)}>
+                    {index + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationNext
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              />
+            </PaginationContent>
+          </Pagination>
         </div>
       </main>
 
