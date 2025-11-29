@@ -10,6 +10,13 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { School, Search, Users, BookOpen, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,43 +26,19 @@ interface ClassInfo {
   studentCount: number;
   homeroomTeacher: string;
   averageGrade: number;
+  academicYear: string;
+  promotionRate: number;
 }
 
 const mockClasses: ClassInfo[] = [
-  {
-    name: "10A1",
-    grade: 10,
-    studentCount: 35,
-    homeroomTeacher: "Phạm Văn D",
-    averageGrade: 8.2,
-  },
-  {
-    name: "10A2",
-    grade: 10,
-    studentCount: 33,
-    homeroomTeacher: "Lê Văn K",
-    averageGrade: 7.8,
-  },
-  {
-    name: "11A1",
-    grade: 11,
-    studentCount: 32,
-    homeroomTeacher: "Nguyễn Thị M",
-    averageGrade: 8.0,
-  },
-  {
-    name: "11A2",
-    grade: 11,
-    studentCount: 34,
-    homeroomTeacher: "Trần Văn F",
-    averageGrade: 8.5,
-  },
   {
     name: "12A1",
     grade: 12,
     studentCount: 30,
     homeroomTeacher: "Nguyễn Văn H",
     averageGrade: 8.3,
+    academicYear: "2024-2025",
+    promotionRate: 0,
   },
   {
     name: "12A2",
@@ -63,6 +46,8 @@ const mockClasses: ClassInfo[] = [
     studentCount: 31,
     homeroomTeacher: "Võ Thị N",
     averageGrade: 7.9,
+    academicYear: "2024-2025",
+    promotionRate: 0,
   },
   {
     name: "12A3",
@@ -70,6 +55,44 @@ const mockClasses: ClassInfo[] = [
     studentCount: 29,
     homeroomTeacher: "Đặng Văn P",
     averageGrade: 8.1,
+    academicYear: "2024-2025",
+    promotionRate: 0,
+  },
+  {
+    name: "10A1",
+    grade: 10,
+    studentCount: 35,
+    homeroomTeacher: "Phạm Văn D",
+    averageGrade: 8.2,
+    academicYear: "2023-2024",
+    promotionRate: 94.29,
+  },
+  {
+    name: "10A2",
+    grade: 10,
+    studentCount: 33,
+    homeroomTeacher: "Lê Văn K",
+    averageGrade: 7.8,
+    academicYear: "2023-2024",
+    promotionRate: 90.91,
+  },
+  {
+    name: "11A1",
+    grade: 11,
+    studentCount: 32,
+    homeroomTeacher: "Nguyễn Thị M",
+    averageGrade: 8.0,
+    academicYear: "2023-2024",
+    promotionRate: 93.75,
+  },
+  {
+    name: "11A2",
+    grade: 11,
+    studentCount: 34,
+    homeroomTeacher: "Trần Văn F",
+    averageGrade: 8.5,
+    academicYear: "2023-2024",
+    promotionRate: 97.06,
   },
 ];
 
@@ -77,6 +100,8 @@ export default function SchoolOverviewPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [gradeFilter, setGradeFilter] = useState<string>("all");
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -94,9 +119,14 @@ export default function SchoolOverviewPage() {
 
   const filteredClasses = mockClasses.filter(
     (cls) =>
-      cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cls.homeroomTeacher.toLowerCase().includes(searchQuery.toLowerCase())
+      (cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cls.homeroomTeacher.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      (yearFilter === "all" || cls.academicYear === yearFilter) &&
+      (gradeFilter === "all" || cls.grade.toString() === gradeFilter)
   );
+
+  const yearOptions = Array.from(new Set(mockClasses.map((c) => c.academicYear))).sort().reverse();
+  const gradeOptions = Array.from(new Set(mockClasses.map((c) => c.grade))).sort((a, b) => a - b);
 
   const totalStudents = mockClasses.reduce(
     (sum, cls) => sum + cls.studentCount,
@@ -272,87 +302,139 @@ export default function SchoolOverviewPage() {
             </div>
           </motion.div>
 
-          {/* Search */}
+          {/* Section Title */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.6 }}
             className="mb-6"
           >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm lớp học hoặc GVCN..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <h2 className="text-xl font-semibold mb-4">Danh sách lớp học</h2>
+          </motion.div>
+
+          {/* Filters */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.65 }}
+            className="mb-6"
+          >
+            <GlassCard padding="lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Tìm kiếm lớp học hoặc GVCN..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Lọc theo năm học" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả năm học</SelectItem>
+                    {yearOptions.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={gradeFilter} onValueChange={setGradeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Lọc theo khối" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả khối</SelectItem>
+                    {gradeOptions.map((grade) => (
+                      <SelectItem key={grade} value={grade.toString()}>
+                        Khối {grade}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </GlassCard>
           </motion.div>
 
           {/* Classes List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredClasses.map((classInfo, index) => (
-              <motion.div
-                key={classInfo.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-              >
-                <GlassCard hover padding="lg" className="cursor-pointer">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-2xl font-bold">{classInfo.name}</h3>
-                      <Badge variant="secondary" className="mt-1">
-                        Khối {classInfo.grade}
-                      </Badge>
-                    </div>
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${classInfo.homeroomTeacher}`}
-                      />
-                      <AvatarFallback>
-                        {classInfo.homeroomTeacher
-                          .split(" ")
-                          .slice(-1)[0]
-                          .charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.7 }}
+          >
+            <GlassCard padding="none" className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border/40 bg-muted/50">
+                      <th className="px-6 py-3 text-left text-sm font-semibold">Lớp</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold">Khối</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold">GVCN</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold">Số HS</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold">Năm học</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold">Điểm TB</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold">% Lên lớp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredClasses.map((classInfo) => (
+                      <tr key={classInfo.name} className="border-b border-border/20 hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4 font-semibold">{classInfo.name}</td>
+                        <td className="px-6 py-4">
+                          <Badge variant="outline">Khối {classInfo.grade}</Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm">{classInfo.homeroomTeacher}</td>
+                        <td className="px-6 py-4 text-sm">{classInfo.studentCount}</td>
+                        <td className="px-6 py-4 text-sm">{classInfo.academicYear}</td>
+                        <td className="px-6 py-4">
+                          <Badge
+                            className={cn(
+                              classInfo.averageGrade >= 8
+                                ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                : classInfo.averageGrade >= 6.5
+                                ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                : "bg-orange-500/10 text-orange-600 border-orange-500/20"
+                            )}
+                          >
+                            {classInfo.averageGrade}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          {classInfo.academicYear !== "2024-2025" && classInfo.promotionRate > 0 ? (
+                            <Badge
+                              className={cn(
+                                classInfo.promotionRate >= 95
+                                  ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                  : classInfo.promotionRate >= 90
+                                  ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                  : "bg-orange-500/10 text-orange-600 border-orange-500/20"
+                              )}
+                            >
+                              {classInfo.promotionRate.toFixed(2)}%
+                            </Badge>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                  <div className="space-y-2 text-sm mb-3">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{classInfo.studentCount} học sinh</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <BookOpen className="h-4 w-4" />
-                      <span>GVCN: {classInfo.homeroomTeacher}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-border/40">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Điểm TB
-                      </span>
-                      <Badge
-                        className={cn(
-                          classInfo.averageGrade >= 8
-                            ? "bg-green-500/10 text-green-600 border-green-500/20"
-                            : classInfo.averageGrade >= 6.5
-                            ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                            : "bg-orange-500/10 text-orange-600 border-orange-500/20"
-                        )}
-                      >
-                        {classInfo.averageGrade}
-                      </Badge>
-                    </div>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            ))}
-          </div>
+              {filteredClasses.length === 0 && (
+                <div className="p-8 text-center text-muted-foreground">
+                  Không tìm thấy lớp học nào phù hợp
+                </div>
+              )}
+            </GlassCard>
+          </motion.div>
 
           {filteredClasses.length === 0 && (
             <GlassCard padding="lg">

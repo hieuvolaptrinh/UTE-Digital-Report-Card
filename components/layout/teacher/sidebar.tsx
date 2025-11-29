@@ -216,12 +216,6 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
           icon: MessageSquare,
           roles: ["principal"],
         },
-        {
-          label: "Duyệt yêu cầu sửa điểm",
-          href: "/teacher/principal/list-sua-diem",
-          icon: FileText,
-          roles: ["principal"],
-        },
       ],
     },
   ];
@@ -464,7 +458,7 @@ export function TeacherSidebar({
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      <ScrollArea className="flex-1 px-3 py-3 overflow-y-auto">
         <SidebarNav
           items={sidebarItems}
           collapsed={collapsed}
