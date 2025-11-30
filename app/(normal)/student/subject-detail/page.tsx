@@ -18,8 +18,16 @@ import {
   XCircle,
   Clock,
   AlertCircle,
+  MessageSquare, 
 } from "lucide-react";
 import Link from "next/link";
+
+// --- CẤU HÌNH TRẠNG THÁI ---
+const MOCK_CONFIG = {
+  // 'midterm': Giữa kỳ -> Hiện khung CK và Nhận xét nhưng để trống
+  // 'final': Cuối kỳ -> Hiện đầy đủ dữ liệu
+  phase: "midterm" as "midterm" | "final", 
+};
 
 // Hard coded data cho môn Toán
 const SUBJECT_DATA = {
@@ -33,7 +41,7 @@ const SUBJECT_DATA = {
     test15min: [8.5, 9],
     test45min: [8, 9],
     midterm: 8.5,
-    final: 9,
+    final: 9, 
   },
   average: 8.6,
   teacherId: "GV001",
@@ -69,7 +77,6 @@ export default function SubjectDetailPage() {
 
   const subjectGrade = SUBJECT_DATA;
 
-  // Lọc edit requests cho môn Toán
   const editRequests = mockGradeEditRequests.filter(
     (req) => req.subjectId === "TOAN"
   );
@@ -174,20 +181,21 @@ export default function SubjectDetailPage() {
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-semibold">Tổng quan</h3>
                     <div className="text-right">
-                      <div
-                        className={`text-3xl font-bold ${getGradeColor(
-                          subjectGrade.average
-                        )}`}
-                      >
-                        {subjectGrade.average.toFixed(1)}
-                      </div>
-                      <Badge
-                        variant={
-                          subjectGrade.average >= 8.0 ? "default" : "secondary"
-                        }
-                      >
-                        {getGradeLabel(subjectGrade.average)}
-                      </Badge>
+                      {MOCK_CONFIG.phase === 'final' ? (
+                        <>
+                          <div className={`text-3xl font-bold ${getGradeColor(subjectGrade.average)}`}>
+                            {subjectGrade.average.toFixed(1)}
+                          </div>
+                          <Badge variant={subjectGrade.average >= 8.0 ? "default" : "secondary"}>
+                            {getGradeLabel(subjectGrade.average)}
+                          </Badge>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-3xl font-bold text-gray-300 dark:text-gray-700">--</div>
+                          <span className="text-xs text-muted-foreground">Chưa tổng kết</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -224,115 +232,79 @@ export default function SubjectDetailPage() {
                     </Link>
                   </div>
                   <div className="space-y-4">
-                    {/* Điểm miệng */}
                     <div className="p-4 rounded-lg bg-white/5 dark:bg-black/5">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium">Điểm miệng</span>
-                        <span className="text-sm text-muted-foreground">
-                          Hệ số: 1
-                        </span>
+                        <span className="text-sm text-muted-foreground">Hệ số: 1</span>
                       </div>
                       <div className="flex gap-2">
                         {subjectGrade.scores.oral.map((score, idx) => (
-                          <Badge
-                            key={idx}
-                            variant="outline"
-                            className="text-base"
-                          >
-                            {score}
-                          </Badge>
+                          <Badge key={idx} variant="outline" className="text-base">{score}</Badge>
                         ))}
                       </div>
                     </div>
 
-                    {/* Điểm 15 phút */}
                     <div className="p-4 rounded-lg bg-white/5 dark:bg-black/5">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium">Điểm 15 phút</span>
-                        <span className="text-sm text-muted-foreground">
-                          Hệ số: 1
-                        </span>
+                        <span className="text-sm text-muted-foreground">Hệ số: 1</span>
                       </div>
                       <div className="flex gap-2">
                         {subjectGrade.scores.test15min.map((score, idx) => (
-                          <Badge
-                            key={idx}
-                            variant="outline"
-                            className="text-base"
-                          >
-                            {score}
-                          </Badge>
+                          <Badge key={idx} variant="outline" className="text-base">{score}</Badge>
                         ))}
                       </div>
                     </div>
 
-                    {/* Điểm 1 tiết */}
                     <div className="p-4 rounded-lg bg-white/5 dark:bg-black/5">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium">Điểm 1 tiết</span>
-                        <span className="text-sm text-muted-foreground">
-                          Hệ số: 2
-                        </span>
+                        <span className="text-sm text-muted-foreground">Hệ số: 2</span>
                       </div>
                       <div className="flex gap-2">
                         {subjectGrade.scores.test45min.map((score, idx) => (
-                          <Badge
-                            key={idx}
-                            variant="outline"
-                            className="text-base"
-                          >
-                            {score}
-                          </Badge>
+                          <Badge key={idx} variant="outline" className="text-base">{score}</Badge>
                         ))}
                       </div>
                     </div>
 
-                    {/* Điểm giữa kỳ */}
                     <div className="p-4 rounded-lg bg-white/5 dark:bg-black/5">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium">Điểm giữa kỳ</span>
-                        <span className="text-sm text-muted-foreground">
-                          Hệ số: 2
-                        </span>
+                        <span className="text-sm text-muted-foreground">Hệ số: 2</span>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className="text-lg font-semibold"
-                      >
+                      <Badge variant="outline" className="text-lg font-semibold">
                         {subjectGrade.scores.midterm}
                       </Badge>
                     </div>
 
-                    {/* Điểm cuối kỳ */}
                     <div className="p-4 rounded-lg bg-white/5 dark:bg-black/5">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium">Điểm cuối kỳ</span>
-                        <span className="text-sm text-muted-foreground">
-                          Hệ số: 3
-                        </span>
+                        <span className="text-sm text-muted-foreground">Hệ số: 3</span>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className="text-lg font-semibold"
-                      >
-                        {subjectGrade.scores.final}
-                      </Badge>
+                      {MOCK_CONFIG.phase === 'final' ? (
+                        <Badge variant="outline" className="text-lg font-semibold">
+                          {subjectGrade.scores.final}
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-600 font-medium text-lg">--</span>
+                      )}
                     </div>
                   </div>
                 </GlassCard>
               </motion.div>
 
-              {/* Teacher Comment */}
-              {subjectGrade.teacherComment && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <GlassCard padding="md">
-                    <h3 className="text-lg font-semibold mb-4">
-                      Nhận xét của giáo viên
-                    </h3>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <GlassCard padding="md">
+                  <h3 className="text-lg font-semibold mb-4">
+                    Nhận xét của giáo viên
+                  </h3>
+                  {MOCK_CONFIG.phase === 'final' && subjectGrade.teacherComment ? (
                     <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                       <p className="text-sm leading-relaxed">
                         {subjectGrade.teacherComment}
@@ -343,12 +315,20 @@ export default function SubjectDetailPage() {
                         </span>
                       </div>
                     </div>
-                  </GlassCard>
-                </motion.div>
-              )}
+                  ) : (
+                    <div className="p-8 rounded-lg border-2 border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center text-center">
+                      <div className="p-3 bg-gray-50 dark:bg-zinc-900 rounded-full mb-2">
+                         <MessageSquare className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Chưa có nhận xét cho học kỳ này
+                      </p>
+                    </div>
+                  )}
+                </GlassCard>
+              </motion.div>
             </div>
 
-            {/* Right column - Edit requests history */}
             <div className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -416,7 +396,6 @@ export default function SubjectDetailPage() {
                 </GlassCard>
               </motion.div>
 
-              {/* Formula Card */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
