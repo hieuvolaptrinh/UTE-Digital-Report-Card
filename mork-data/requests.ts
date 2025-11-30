@@ -1,4 +1,8 @@
-// Leave Requests (Đơn xin nghỉ học)
+// mork-data/requests.ts
+
+// ==========================================
+// 1. LEAVE REQUESTS (Đơn xin nghỉ học) - GIỮ NGUYÊN
+// ==========================================
 export interface LeaveRequest {
   id: string;
   studentId: string;
@@ -64,81 +68,96 @@ export const mockLeaveRequests: LeaveRequest[] = [
   },
 ];
 
-// Grade Edit Requests (Yêu cầu sửa điểm)
+// ==========================================
+// 2. GRADE EDIT REQUESTS (Yêu cầu sửa điểm) - ĐÃ CẬP NHẬT
+// ==========================================
 export interface GradeEditRequest {
   id: string;
-  teacherId: string;
-  teacherName: string;
   studentId: string;
-  studentName: string;
-  class: string;
-  subject: string;
-  scoreType: "oral" | "test15min" | "test45min" | "midterm" | "final";
-  oldScore: number;
-  newScore: number;
+  studentName?: string;
+  class?: string;
+  
+  // Thông tin môn học & Giáo viên
+  subjectId: string;       // <-- QUAN TRỌNG: Để lọc theo môn
+  subjectName: string;
+  teacherId?: string;      // Để lọc theo GV
+  teacherName?: string;
+
+  // Thông tin điểm
+  scoreType: string;       // VD: 'midterm'
+  scoreTypeLabel: string;  // VD: "Điểm giữa kỳ"
+  currentScore: number | string; // Điểm cũ
+  desiredScore: number;          // Điểm mới
+
+  // Chi tiết yêu cầu
   reason: string;
+  evidence?: string;
   status: "pending" | "approved" | "rejected";
-  requestedAt: string;
+  
+  // Phản hồi
+  teacherResponse?: string; 
   reviewedBy?: string;
   reviewedAt?: string;
-  reviewNote?: string;
+
+  // Thời gian
+  createdAt: string;
 }
 
 export const mockGradeEditRequests: GradeEditRequest[] = [
   {
-    id: "GE001",
+    id: "REQ001",
+    studentId: "2024001",
+    studentName: "Nguyễn Văn A",
+    class: "10A1",
+    subjectId: "TOAN",
+    subjectName: "Toán học",
     teacherId: "GV001",
-    teacherName: "Phạm Văn D",
-    studentId: "HS001",
-    studentName: "Nguyễn Văn B",
-    class: "10A1",
-    subject: "Toán học",
-    scoreType: "test15min",
-    oldScore: 7.5,
-    newScore: 8.0,
-    reason: "Nhầm lẫn khi chấm bài, điểm đúng là 8.0",
-    status: "pending",
-    requestedAt: "2024-12-18T10:00:00",
-  },
-  {
-    id: "GE002",
-    teacherId: "GV002",
-    teacherName: "Nguyễn Thị E",
-    studentId: "HS002",
-    studentName: "Trần Thị C",
-    class: "10A1",
-    subject: "Ngữ văn",
-    scoreType: "test45min",
-    oldScore: 6.0,
-    newScore: 7.0,
-    reason: "Chấm thiếu câu 3, cần bổ sung điểm",
-    status: "approved",
-    requestedAt: "2024-12-15T11:00:00",
-    reviewedBy: "GV000",
-    reviewedAt: "2024-12-15T15:00:00",
-    reviewNote: "Đã xem lại bài làm, đồng ý sửa điểm",
-  },
-  {
-    id: "GE003",
-    teacherId: "GV003",
-    teacherName: "Trần Văn F",
-    studentId: "HS003",
-    studentName: "Lê Văn D",
-    class: "10A2",
-    subject: "Vật lý",
     scoreType: "midterm",
-    oldScore: 5.5,
-    newScore: 6.0,
-    reason: "Học sinh có khiếu nại, cần review lại",
+    scoreTypeLabel: "Điểm giữa kỳ",
+    currentScore: 8.5,
+    desiredScore: 9.0,
+    reason: "Em nghĩ thầy nhập nhầm điểm câu 4 ạ.",
+    status: "pending",
+    createdAt: "2024-11-20T10:30:00Z",
+  },
+  {
+    id: "REQ002",
+    studentId: "2024001",
+    studentName: "Nguyễn Văn A",
+    subjectId: "TOAN",
+    subjectName: "Toán học",
+    teacherId: "GV001",
+    scoreType: "oral",
+    scoreTypeLabel: "Điểm miệng",
+    currentScore: 7,
+    desiredScore: 8,
+    reason: "Em xung phong lên bảng ngày 15/10 nhưng chưa thấy điểm.",
     status: "rejected",
-    requestedAt: "2024-12-10T09:00:00",
-    reviewedBy: "GV000",
-    reviewedAt: "2024-12-10T14:00:00",
-    reviewNote: "Đã kiểm tra kỹ, điểm chấm là chính xác",
+    teacherResponse: "Ngày đó em trả lời chưa trọn vẹn câu hỏi phụ.",
+    reviewedBy: "GV001",
+    createdAt: "2024-10-16T14:00:00Z",
+  },
+  {
+    id: "REQ003",
+    studentId: "2024001",
+    subjectId: "VAN",
+    subjectName: "Ngữ văn",
+    teacherId: "GV002",
+    scoreType: "15min",
+    scoreTypeLabel: "Điểm 15 phút",
+    currentScore: 6.5,
+    desiredScore: 7.0,
+    reason: "Phúc khảo bài kiểm tra số 2.",
+    status: "approved",
+    teacherResponse: "Đã kiểm tra lại, cộng thiếu 0.5đ phần trắc nghiệm.",
+    reviewedBy: "GV002",
+    createdAt: "2024-11-05T09:15:00Z",
   },
 ];
 
-// Transcript Requests (Yêu cầu bảng điểm)
+// ==========================================
+// 3. TRANSCRIPT REQUESTS (Yêu cầu bảng điểm) - GIỮ NGUYÊN
+// ==========================================
 export interface TranscriptRequest {
   id: string;
   studentId: string;
@@ -192,7 +211,11 @@ export const mockTranscriptRequests: TranscriptRequest[] = [
   },
 ];
 
-// Helper functions for Leave Requests
+// ==========================================
+// 4. HELPER FUNCTIONS
+// ==========================================
+
+// --- Leave Requests Helpers ---
 export function getLeaveRequestsByStudent(studentId: string): LeaveRequest[] {
   return mockLeaveRequests.filter((req) => req.studentId === studentId);
 }
@@ -237,10 +260,8 @@ export function rejectLeaveRequest(
   return false;
 }
 
-// Helper functions for Grade Edit Requests
-export function getGradeEditRequestsByTeacher(
-  teacherId: string
-): GradeEditRequest[] {
+// --- Grade Edit Requests Helpers (ĐÃ CẬP NHẬT THEO INTERFACE MỚI) ---
+export function getGradeEditRequestsByTeacher(teacherId: string): GradeEditRequest[] {
   return mockGradeEditRequests.filter((req) => req.teacherId === teacherId);
 }
 
@@ -258,7 +279,7 @@ export function approveGradeEditRequest(
     request.status = "approved";
     request.reviewedBy = reviewerId;
     request.reviewedAt = new Date().toISOString();
-    request.reviewNote = note;
+    request.teacherResponse = note; // Cập nhật: reviewNote -> teacherResponse
     return true;
   }
   return false;
@@ -274,16 +295,14 @@ export function rejectGradeEditRequest(
     request.status = "rejected";
     request.reviewedBy = reviewerId;
     request.reviewedAt = new Date().toISOString();
-    request.reviewNote = note;
+    request.teacherResponse = note; // Cập nhật: reviewNote -> teacherResponse
     return true;
   }
   return false;
 }
 
-// Helper functions for Transcript Requests
-export function getTranscriptRequestsByStudent(
-  studentId: string
-): TranscriptRequest[] {
+// --- Transcript Requests Helpers ---
+export function getTranscriptRequestsByStudent(studentId: string): TranscriptRequest[] {
   return mockTranscriptRequests.filter((req) => req.studentId === studentId);
 }
 
