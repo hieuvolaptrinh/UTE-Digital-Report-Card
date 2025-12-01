@@ -7,10 +7,9 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { GlassCard } from "@/components/ui/glass-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -19,28 +18,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getStudentDetailsByClass, mockGrades } from "@/mork-data";
-import { ArrowLeft, Save, CheckCircle2, Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Eye, Download, User, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { getStudentDetailsByClass, getGradesByClassAndSubject, StudentSubjectGrade } from "@/mork-data";
 
-interface StudentGrade {
-  studentId: string;
-  studentName: string;
-  oral: number | "";
-  test15min: number | "";
-  test45min: number | "";
-  midterm: number | "";
-  final: number | "";
-}
-
-export default function ClassDetailPage() {
+export default function ClassDetailsPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const params = useParams();
   const className = decodeURIComponent(params.className as string);
 
-  const [students, setStudents] = useState<StudentGrade[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const students = getStudentDetailsByClass(className);
+  const subjectName = "Toán học"; 
+  const grades = getGradesByClassAndSubject(className, subjectName);
+
+  const [selectedStudent, setSelectedStudent] = useState<{
+    student: any;
+    grade: StudentSubjectGrade | undefined;
+    avg: string | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!isLoading && (!user || !isTeacher(user))) {
@@ -48,333 +51,259 @@ export default function ClassDetailPage() {
     }
   }, [user, isLoading, router]);
 
-  useEffect(() => {
-    const classStudents = getStudentDetailsByClass(className);
-    const gradesData: StudentGrade[] = classStudents.map((student) => {
-      const studentGrades = mockGrades.find(
-        (g) => g.studentId === student.studentId
-      );
+  if (isLoading || !user || !isTeacher(user)) return null;
 
-      return {
-        studentId: student.studentId,
-        studentName: student.name,
-        oral: (studentGrades?.scores.oral[0] ?? "") as number | "",
-        test15min: (studentGrades?.scores.test15min[0] ?? "") as number | "",
-        test45min: (studentGrades?.scores.test45min[0] ?? "") as number | "",
-        midterm: (studentGrades?.scores.midterm ?? "") as number | "",
-        final: (studentGrades?.scores.final ?? "") as number | "",
-      };
-    });
-
-    setStudents(gradesData);
-  }, [className]);
-
-  const handleGradeChange = (
-    studentId: string,
-    type: keyof Omit<StudentGrade, "studentId" | "studentName">,
-    value: string
-  ) => {
-    const numValue = value === "" ? "" : parseFloat(value);
-    if (
-      value !== "" &&
-      typeof numValue === "number" &&
-      (isNaN(numValue) || numValue < 0 || numValue > 10)
-    ) {
-      return;
-    }
-
-    setStudents((prev) =>
-      prev.map((s) =>
-        s.studentId === studentId ? { ...s, [type]: numValue } : s
-      )
-    );
+  const headerUser = {
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    role: user.role as any,
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    // Simulate saving
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const calculateAverage = (student: StudentGrade): string => {
-    const grades = [
-      student.oral,
-      student.test15min,
-      student.test45min,
-      student.midterm,
-      student.final,
-    ].filter((g) => g !== "") as number[];
-
-    if (grades.length === 0) return "-";
-
-    // Weighted average: oral x1, test15 x1, test45 x2, midterm x2, final x3
-    let sum = 0;
+  const getAverage = (studentId: string) => {
+    const g = grades.find((item) => item.studentId === studentId);
+    if (!g) return null;
+    
+    let total = 0;
     let weight = 0;
-
-    if (student.oral !== "") {
-      sum += (student.oral as number) * 1;
-      weight += 1;
-    }
-    if (student.test15min !== "") {
-      sum += (student.test15min as number) * 1;
-      weight += 1;
-    }
-    if (student.test45min !== "") {
-      sum += (student.test45min as number) * 2;
-      weight += 2;
-    }
-    if (student.midterm !== "") {
-      sum += (student.midterm as number) * 2;
-      weight += 2;
-    }
-    if (student.final !== "") {
-      sum += (student.final as number) * 3;
-      weight += 3;
-    }
-
-    return weight > 0 ? (sum / weight).toFixed(1) : "-";
+    
+    if (g.oral.length) { total += g.oral.reduce((a, b) => a + b, 0); weight += g.oral.length; }
+    if (g.test15min.length) { total += g.test15min.reduce((a, b) => a + b, 0); weight += g.test15min.length; }
+    if (g.test45min.length) { total += g.test45min.reduce((a, b) => a + b, 0) * 2; weight += g.test45min.length * 2; }
+    if (g.midterm) { total += g.midterm * 2; weight += 2; }
+    if (g.final) { total += g.final * 3; weight += 3; }
+    
+    return weight > 0 ? (total / weight).toFixed(1) : null;
   };
 
-  if (isLoading || !user || !isTeacher(user)) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const handleExportExcel = () => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "STT,MaHS,HoTen,DiemMieng,15Phut,1Tiet,GiuaKy,CuoiKy,TBM\n"
+        + students.map((s, i) => {
+            const g = grades.find(x => x.studentId === s.studentId);
+            const avg = getAverage(s.studentId) || "";
+            const oral = g?.oral.join(' - ') || '';
+            const t15 = g?.test15min.join(' - ') || '';
+            const t45 = g?.test45min.join(' - ') || '';
+            return `${i+1},${s.studentId},${s.name},"${oral}","${t15}","${t45}",${g?.midterm || ''},${g?.final || ''},${avg}`;
+        }).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Bang_Diem_${className}_${subjectName}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <>
-      <Header
-        user={{
-          name: user.name,
-          email: user.email,
-          avatar: user.avatar,
-          role: user.role as any,
-        }}
-        onLogout={logout}
-      />
-      <main className="min-h-screen bg-linear-to-br from-orange-50 via-white to-yellow-50">
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <Header user={headerUser} onLogout={logout} />
+      <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+        <div className="container mx-auto px-4 py-6">
+          
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
-            <Link href="/teacher/class">
-              <Button variant="ghost" className="mb-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại danh sách lớp
-              </Button>
-            </Link>
-
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Link href="/teacher/classes">
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-black/5">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
               <div>
-                <h1 className="text-3xl font-bold mb-2">Lớp {className}</h1>
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary">{user.subject}</Badge>
-                  <span className="text-muted-foreground">
-                    {students.length} học sinh
-                  </span>
+                <h1 className="text-3xl font-bold">Lớp {className}</h1>
+                <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                   <Badge variant="outline" className="gap-1 bg-white">
+                      <BookOpen className="h-3 w-3" /> {subjectName}
+                   </Badge>
+                   <span>• {students.length} học sinh</span>
                 </div>
               </div>
-              <Button onClick={handleSave} disabled={saving || saved} size="lg">
-                {saving ? (
-                  "Đang lưu..."
-                ) : saved ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Đã lưu
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Lưu điểm
-                  </>
-                )}
-              </Button>
+            </div>
+
+            <div className="flex gap-2">
+                <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={handleExportExcel}>
+                  <Download className="h-4 w-4" /> Xuất Excel
+                </Button>
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <GlassCard padding="none" className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-semibold w-12">STT</TableHead>
-                      <TableHead className="font-semibold min-w-[200px]">
-                        Họ và tên
-                      </TableHead>
-                      <TableHead className="font-semibold text-center w-24">
-                        Miệng
-                      </TableHead>
-                      <TableHead className="font-semibold text-center w-24">
-                        15 phút
-                      </TableHead>
-                      <TableHead className="font-semibold text-center w-24">
-                        1 tiết
-                      </TableHead>
-                      <TableHead className="font-semibold text-center w-24">
-                        Giữa kỳ
-                      </TableHead>
-                      <TableHead className="font-semibold text-center w-24">
-                        Cuối kỳ
-                      </TableHead>
-                      <TableHead className="font-semibold text-center w-24">
-                        TB
-                      </TableHead>
-                      <TableHead className="font-semibold text-center w-32">
-                        Thao tác
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {students.map((student, index) => (
-                      <TableRow key={student.studentId}>
-                        <TableCell className="font-medium">
-                          {index + 1}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {student.studentName}
-                        </TableCell>
+          <GlassCard className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="w-[50px] text-center">STT</TableHead>
+                    <TableHead className="w-[250px]">Họ và tên</TableHead>
+                    <TableHead className="text-center">Miệng</TableHead>
+                    <TableHead className="text-center">15 phút</TableHead>
+                    <TableHead className="text-center">1 tiết</TableHead>
+                    <TableHead className="text-center w-[80px]">Giữa kỳ</TableHead>
+                    <TableHead className="text-center w-[80px]">Cuối kỳ</TableHead>
+                    <TableHead className="text-center w-[80px] font-bold text-primary">TBM</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {students.map((student, index) => {
+                    const studentGrade = grades.find(g => g.studentId === student.studentId);
+                    const avg = getAverage(student.studentId);
+
+                    return (
+                      <TableRow key={student.studentId} className="hover:bg-muted/20 transition-colors">
+                        <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.1"
-                            value={student.oral}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                student.studentId,
-                                "oral",
-                                e.target.value
-                              )
-                            }
-                            className="text-center"
-                            placeholder="-"
-                          />
+                          <div className="flex items-center gap-3">
+                             <Avatar className="h-8 w-8 border border-border">
+                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.studentId}`} />
+                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                             </Avatar>
+                             <div className="flex flex-col">
+                                <span className="font-medium">{student.name}</span>
+                                <span className="text-xs text-muted-foreground">{student.studentId}</span>
+                             </div>
+                          </div>
                         </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.1"
-                            value={student.test15min}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                student.studentId,
-                                "test15min",
-                                e.target.value
-                              )
-                            }
-                            className="text-center"
-                            placeholder="-"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.1"
-                            value={student.test45min}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                student.studentId,
-                                "test45min",
-                                e.target.value
-                              )
-                            }
-                            className="text-center"
-                            placeholder="-"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.1"
-                            value={student.midterm}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                student.studentId,
-                                "midterm",
-                                e.target.value
-                              )
-                            }
-                            className="text-center"
-                            placeholder="-"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.1"
-                            value={student.final}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                student.studentId,
-                                "final",
-                                e.target.value
-                              )
-                            }
-                            className="text-center"
-                            placeholder="-"
-                          />
-                        </TableCell>
-                        <TableCell className="text-center font-semibold text-primary">
-                          {calculateAverage(student)}
+                        
+                        <TableCell className="text-center">
+                           <div className="flex justify-center gap-1 flex-wrap max-w-[120px] mx-auto">
+                             {studentGrade?.oral.length ? studentGrade.oral.map((s, i) => (
+                               <Badge key={i} variant="secondary" className="px-1.5 py-0 text-xs font-normal border border-border bg-gray-50">{s}</Badge>
+                             )) : <span className="text-muted-foreground text-sm">-</span>}
+                           </div>
                         </TableCell>
                         <TableCell className="text-center">
-                          <Link
-                            href={`/teacher/class/${className}/${student.studentId}`}
-                          >
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4 mr-1" />
-                              Chi tiết
-                            </Button>
-                          </Link>
+                           <div className="flex justify-center gap-1 flex-wrap max-w-[120px] mx-auto">
+                             {studentGrade?.test15min.length ? studentGrade.test15min.map((s, i) => (
+                               <Badge key={i} variant="secondary" className="px-1.5 py-0 text-xs font-normal border border-blue-200 bg-blue-50 text-blue-700">{s}</Badge>
+                             )) : <span className="text-muted-foreground text-sm">-</span>}
+                           </div>
+                        </TableCell>
+                         <TableCell className="text-center">
+                           <div className="flex justify-center gap-1 flex-wrap max-w-[120px] mx-auto">
+                             {studentGrade?.test45min.length ? studentGrade.test45min.map((s, i) => (
+                               <Badge key={i} variant="secondary" className="px-1.5 py-0 text-xs font-normal border border-purple-200 bg-purple-50 text-purple-700">{s}</Badge>
+                             )) : <span className="text-muted-foreground text-sm">-</span>}
+                           </div>
+                        </TableCell>
+                        <TableCell className="text-center font-medium text-orange-600">
+                           {studentGrade?.midterm ?? "-"}
+                        </TableCell>
+                        <TableCell className="text-center font-medium text-red-600">
+                           {studentGrade?.final ?? "-"}
+                        </TableCell>
+                        <TableCell className="text-center font-bold text-primary text-base">
+                           {avg ?? "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              onClick={() => setSelectedStudent({ student, grade: studentGrade, avg })}
+                           >
+                              <Eye className="h-4 w-4" /> Chi tiết
+                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {students.length === 0 && (
-                <div className="p-12 text-center text-muted-foreground">
-                  Chưa có học sinh trong lớp này
-                </div>
-              )}
-            </GlassCard>
-
-            <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-              <h3 className="font-semibold mb-2">Hướng dẫn nhập điểm:</h3>
-              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Nhập điểm từ 0 đến 10, có thể nhập số thập phân</li>
-                <li>
-                  Điểm trung bình được tính theo hệ số: Miệng (x1), 15 phút
-                  (x1), 1 tiết (x2), Giữa kỳ (x2), Cuối kỳ (x3)
-                </li>
-                <li>Bỏ trống nếu chưa có điểm</li>
-                <li>Nhấn &ldquo;Lưu điểm&rdquo; để lưu thay đổi</li>
-              </ul>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
-          </motion.div>
+          </GlassCard>
         </div>
+
+        <Dialog open={!!selectedStudent} onOpenChange={(open) => !open && setSelectedStudent(null)}>
+          <DialogContent className="max-w-md bg-white dark:bg-gray-900">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                 <User className="h-5 w-5 text-primary" />
+                 Bảng điểm chi tiết
+              </DialogTitle>
+              <DialogDescription>
+                Môn học: {subjectName}
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedStudent && (
+              <div className="space-y-6 pt-2">
+                <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-lg border border-border">
+                   <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedStudent.student.studentId}`} />
+                      <AvatarFallback>{selectedStudent.student.name.charAt(0)}</AvatarFallback>
+                   </Avatar>
+                   <div>
+                      <h3 className="font-bold text-lg">{selectedStudent.student.name}</h3>
+                      <p className="text-sm text-muted-foreground">{selectedStudent.student.studentId} • Lớp {className}</p>
+                      <Badge className="mt-2 bg-primary/10 text-primary hover:bg-primary/20 border-0">
+                        TB Môn: {selectedStudent.avg || "Chưa có"}
+                      </Badge>
+                   </div>
+                </div>
+
+                <div className="space-y-4">
+                   <div className="grid grid-cols-3 gap-2 pb-2 border-b text-sm font-semibold text-muted-foreground">
+                      <div>Loại điểm</div>
+                      <div className="text-center">Hệ số</div>
+                      <div className="text-right">Điểm số</div>
+                   </div>
+                   
+                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
+                      <div>Điểm Miệng</div>
+                      <div className="text-center text-muted-foreground">1</div>
+                      <div className="text-right flex justify-end gap-1 flex-wrap">
+                        {selectedStudent.grade?.oral.length ? selectedStudent.grade.oral.map((s,i) => (
+                           <Badge key={i} variant="outline" className="font-mono bg-gray-50">{s}</Badge>
+                        )) : <span className="text-muted-foreground">-</span>}
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
+                      <div>15 Phút</div>
+                      <div className="text-center text-muted-foreground">1</div>
+                      <div className="text-right flex justify-end gap-1 flex-wrap">
+                        {selectedStudent.grade?.test15min.length ? selectedStudent.grade.test15min.map((s,i) => (
+                           <Badge key={i} variant="outline" className="font-mono border-blue-200 text-blue-700 bg-blue-50">{s}</Badge>
+                        )) : <span className="text-muted-foreground">-</span>}
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
+                      <div>1 Tiết</div>
+                      <div className="text-center text-muted-foreground">2</div>
+                      <div className="text-right flex justify-end gap-1 flex-wrap">
+                        {selectedStudent.grade?.test45min.length ? selectedStudent.grade.test45min.map((s,i) => (
+                           <Badge key={i} variant="outline" className="font-mono border-purple-200 text-purple-700 bg-purple-50">{s}</Badge>
+                        )) : <span className="text-muted-foreground">-</span>}
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
+                      <div>Giữa kỳ</div>
+                      <div className="text-center text-muted-foreground">2</div>
+                      <div className="text-right font-bold text-orange-600 text-base">
+                        {selectedStudent.grade?.midterm ?? "-"}
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
+                      <div>Cuối kỳ</div>
+                      <div className="text-center text-muted-foreground">3</div>
+                      <div className="text-right font-bold text-red-600 text-base">
+                        {selectedStudent.grade?.final ?? "-"}
+                      </div>
+                   </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
       </main>
       <Footer />
     </>

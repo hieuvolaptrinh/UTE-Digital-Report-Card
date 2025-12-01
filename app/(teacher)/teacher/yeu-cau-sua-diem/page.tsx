@@ -6,9 +6,11 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+// Import component danh sách mà chúng ta đã tạo ở bước trước
 import { GradeEditRequestsList } from "@/components/section/teacher/grade-edit-requests-list";
 import { Bell } from "lucide-react";
 
+// LƯU Ý QUAN TRỌNG: Phải có chữ "export default" ở đây
 export default function GradeEditRequestsPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
@@ -37,7 +39,7 @@ export default function GradeEditRequestsPage() {
   return (
     <>
       <Header user={headerUser} onLogout={logout} />
-      <main className="min-h-screen bg-linear-to-br from-orange-50 via-white to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -54,13 +56,15 @@ export default function GradeEditRequestsPage() {
                   Yêu cầu sửa điểm
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  Danh sách yêu cầu sửa điểm đã gửi
+                  Danh sách yêu cầu sửa điểm đã gửi từ học sinh
                 </p>
               </div>
             </div>
           </motion.div>
 
+          {/* Hiển thị Component Danh sách (chứa bảng và popup chi tiết) */}
           <GradeEditRequestsList />
+          
         </div>
       </main>
       <Footer />
