@@ -1,20 +1,20 @@
-// components/section/teacher/student-grade-dialog.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { motion } from "framer-motion";
-import type { StudentSubjectGrade } from "@/mork-data/students";
+import { Label } from "@/components/ui/label";
+import { StudentSubjectGrade } from "@/mork-data";
+import { Save, Plus, X, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface StudentGradeDialogProps {
   open: boolean;
@@ -22,6 +22,7 @@ interface StudentGradeDialogProps {
   studentName: string;
   subject: string;
   initialGrades: StudentSubjectGrade | null;
+  onSave: (grades: StudentSubjectGrade) => void;
 }
 
 export function StudentGradeDialog({
@@ -30,169 +31,208 @@ export function StudentGradeDialog({
   studentName,
   subject,
   initialGrades,
+  onSave,
 }: StudentGradeDialogProps) {
-  const [editReason, setEditReason] = useState("");
-  const [requestSent, setRequestSent] = useState(false);
-  const [selectedScoreType, setSelectedScoreType] = useState("");
-  const [newScore, setNewScore] = useState("");
+  const [grades, setGrades] = useState<StudentSubjectGrade | null>(null);
 
-  const handleSendEditRequest = () => {
-    if (editReason.trim() && selectedScoreType && newScore) {
-      console.log("Edit request:", {
-        scoreType: selectedScoreType,
-        newScore: parseFloat(newScore),
-        reason: editReason,
-      });
-      setRequestSent(true);
-      setTimeout(() => {
-        setRequestSent(false);
-        setEditReason("");
-        setSelectedScoreType("");
-        setNewScore("");
-        onOpenChange(false);
-      }, 2000);
+  // Reset data khi mở dialog
+  useEffect(() => {
+    if (open && initialGrades) {
+      setGrades(JSON.parse(JSON.stringify(initialGrades)));
     }
+  }, [open, initialGrades]);
+
+  if (!grades) return null;
+
+  const handleArrayScoreChange = (
+    field: "oral" | "test15min" | "test45min",
+    index: number,
+    value: string
+  ) => {
+    const numVal = parseFloat(value);
+    if (isNaN(numVal) && value !== "") return;
+    if (numVal < 0 || numVal > 10) return;
+
+    const newScores = [...grades[field]];
+    if (value === "") {
+    } else {
+        newScores[index] = numVal;
+    }
+    setGrades({ ...grades, [field]: newScores });
   };
 
-  const getScoreOptions = () => {
-    const options: {
-      label: string;
-      value: string;
-      score: number;
-    }[] = [];
+  const addScore = (field: "oral" | "test15min" | "test45min") => {
+    setGrades({ ...grades, [field]: [...grades[field], 0] });
+  };
 
-    if (initialGrades) {
-      initialGrades.oral?.forEach((score, idx) => {
-        options.push({
-          label: `Điểm miệng #${idx + 1}: ${score.toFixed(1)}`,
-          value: `oral-${idx}`,
-          score,
-        });
-      });
+  const removeScore = (field: "oral" | "test15min" | "test45min", index: number) => {
+    const newScores = grades[field].filter((_, i) => i !== index);
+    setGrades({ ...grades, [field]: newScores });
+  };
 
-      initialGrades.test15min?.forEach((score, idx) => {
-        options.push({
-          label: `Kiểm tra 15 phút #${idx + 1}: ${score.toFixed(1)}`,
-          value: `test15min-${idx}`,
-          score,
-        });
-      });
-
-      initialGrades.test45min?.forEach((score, idx) => {
-        options.push({
-          label: `Kiểm tra 45 phút #${idx + 1}: ${score.toFixed(1)}`,
-          value: `test45min-${idx}`,
-          score,
-        });
-      });
-
-      if (initialGrades.midterm) {
-        options.push({
-          label: `Giữa kỳ: ${initialGrades.midterm.toFixed(1)}`,
-          value: "midterm",
-          score: initialGrades.midterm,
-        });
-      }
-
-      if (initialGrades.final) {
-        options.push({
-          label: `Cuối kỳ: ${initialGrades.final.toFixed(1)}`,
-          value: "final",
-          score: initialGrades.final,
-        });
-      }
+  const handleSingleScoreChange = (field: "midterm" | "final", value: string) => {
+    const numVal = parseFloat(value);
+    if (value === "") {
+        setGrades({ ...grades, [field]: null });
+        return;
     }
+    if (isNaN(numVal) || numVal < 0 || numVal > 10) return;
+    setGrades({ ...grades, [field]: numVal });
+  };
 
-    return options;
+  const handleSave = () => {
+    if (grades) {
+      onSave(grades);
+      onOpenChange(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg backdrop-blur-md bg-background/95 border-border/50">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            Yêu cầu sửa điểm
+          <DialogTitle className="text-xl">
+            Nhập điểm: <span className="text-primary">{studentName}</span>
           </DialogTitle>
-          <DialogDescription>
-            <span className="font-semibold">{studentName}</span> - {subject}
-          </DialogDescription>
+          <div className="text-sm text-muted-foreground">
+            Môn học: <Badge variant="outline">{subject}</Badge>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>Chọn điểm cần sửa</Label>
-            <select
-              value={selectedScoreType}
-              onChange={(e) => setSelectedScoreType(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">-- Chọn điểm --</option>
-              {getScoreOptions().map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+        <ScrollArea className="flex-1 pr-4 -mr-4">
+          <div className="grid gap-6 py-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Điểm Miệng (HS 1)</Label>
+                <Button size="sm" variant="outline" onClick={() => addScore("oral")} className="h-7 text-xs">
+                  <Plus className="h-3 w-3 mr-1" /> Thêm cột
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {grades.oral.map((score, index) => (
+                  <div key={index} className="relative group">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      className="w-16 h-10 text-center font-medium"
+                      value={score}
+                      onChange={(e) => handleArrayScoreChange("oral", index, e.target.value)}
+                    />
+                    <button 
+                        onClick={() => removeScore("oral", index)}
+                        className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {grades.oral.length === 0 && <span className="text-sm text-muted-foreground italic">Chưa có điểm</span>}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Kiểm tra 15 phút (HS 1)</Label>
+                <Button size="sm" variant="outline" onClick={() => addScore("test15min")} className="h-7 text-xs">
+                  <Plus className="h-3 w-3 mr-1" /> Thêm cột
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {grades.test15min.map((score, index) => (
+                  <div key={index} className="relative group">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      className="w-16 h-10 text-center font-medium border-blue-200 focus-visible:ring-blue-500"
+                      value={score}
+                      onChange={(e) => handleArrayScoreChange("test15min", index, e.target.value)}
+                    />
+                    <button 
+                        onClick={() => removeScore("test15min", index)}
+                        className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {grades.test15min.length === 0 && <span className="text-sm text-muted-foreground italic">Chưa có điểm</span>}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Kiểm tra 45 phút (HS 2)</Label>
+                <Button size="sm" variant="outline" onClick={() => addScore("test45min")} className="h-7 text-xs">
+                  <Plus className="h-3 w-3 mr-1" /> Thêm cột
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {grades.test45min.map((score, index) => (
+                  <div key={index} className="relative group">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      className="w-16 h-10 text-center font-medium border-purple-200 focus-visible:ring-purple-500"
+                      value={score}
+                      onChange={(e) => handleArrayScoreChange("test45min", index, e.target.value)}
+                    />
+                    <button 
+                        onClick={() => removeScore("test45min", index)}
+                        className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {grades.test45min.length === 0 && <span className="text-sm text-muted-foreground italic">Chưa có điểm</span>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 pt-4 border-t">
+              <div className="space-y-3">
+                <Label className="text-base font-semibold text-orange-600">Giữa kỳ (HS 2)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  className="h-12 text-lg font-bold text-center border-orange-200 focus-visible:ring-orange-500"
+                  value={grades.midterm ?? ""}
+                  placeholder="--"
+                  onChange={(e) => handleSingleScoreChange("midterm", e.target.value)}
+                />
+              </div>
+
+              {/* Cuối kỳ */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold text-red-600">Cuối kỳ (HS 3)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  className="h-12 text-lg font-bold text-center border-red-200 focus-visible:ring-red-500"
+                  value={grades.final ?? ""}
+                  placeholder="--"
+                  onChange={(e) => handleSingleScoreChange("final", e.target.value)}
+                />
+              </div>
+            </div>
           </div>
+        </ScrollArea>
 
-          <div className="space-y-2">
-            <Label htmlFor="newScore">Điểm mới đề xuất</Label>
-            <Input
-              id="newScore"
-              type="number"
-              min="0"
-              max="10"
-              step="0.5"
-              placeholder="0.0 - 10.0"
-              value={newScore}
-              onChange={(e) => setNewScore(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="editReasonNew">Lý do yêu cầu sửa điểm</Label>
-            <textarea
-              id="editReasonNew"
-              value={editReason}
-              onChange={(e) => setEditReason(e.target.value)}
-              className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-              placeholder="Nhập lý do yêu cầu sửa điểm..."
-            />
-          </div>
-
-          {requestSent && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-4 text-green-600 dark:text-green-400 font-medium"
-            >
-              ✓ Yêu cầu sửa điểm đã được gửi!
-            </motion.div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-              setEditReason("");
-              setSelectedScoreType("");
-              setNewScore("");
-            }}
-          >
-            Hủy
+        <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Hủy bỏ
           </Button>
-          <Button
-            onClick={handleSendEditRequest}
-            disabled={
-              !selectedScoreType ||
-              !newScore ||
-              !editReason.trim() ||
-              requestSent
-            }
-          >
-            Gửi yêu cầu
+          <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
+            <Save className="h-4 w-4 mr-2" /> Lưu thay đổi
           </Button>
         </DialogFooter>
       </DialogContent>

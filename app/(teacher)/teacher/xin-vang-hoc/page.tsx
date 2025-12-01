@@ -3,9 +3,8 @@
 import { useAuth, isTeacher } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { TeacherSidebar } from "@/components/layout/teacher/sidebar";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Label } from "@/components/ui/label";
@@ -34,7 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Filter, FileText, Eye } from "lucide-react";
+import { Filter, FileText, Eye, Check, X, CheckSquare } from "lucide-react";
 
 interface LeaveRequest {
   id: string;
@@ -118,14 +117,18 @@ export default function TeacherLeaveRequestsPage() {
   const router = useRouter();
   const [sortBy, setSortBy] = useState<"date-asc" | "date-desc">("date-desc");
   const [filterClass, setFilterClass] = useState("all");
-  const [filterStatus, setFilterStatus] = useState<"all" | "new" | "viewed">(
-    "all"
-  );
+  const [filterStatus, setFilterStatus] = useState<"all" | "new" | "viewed">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(
-    null
-  );
+  
+  // State quản lý danh sách đơn (để có thể xóa khi duyệt)
+  const [requestsList, setRequestsList] = useState<LeaveRequest[]>(HARDCODED_LEAVE_REQUESTS);
+  
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // State cho checkbox
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && (!user || !isTeacher(user))) {
@@ -135,14 +138,12 @@ export default function TeacherLeaveRequestsPage() {
 
   // Get unique classes for filter
   const uniqueClasses = useMemo(() => {
-    return Array.from(
-      new Set(HARDCODED_LEAVE_REQUESTS.map((r) => r.class))
-    ).sort();
+    return Array.from(new Set(HARDCODED_LEAVE_REQUESTS.map((r) => r.class))).sort();
   }, []);
 
   // Filter and sort requests
   const filteredRequests = useMemo(() => {
-    let filtered = HARDCODED_LEAVE_REQUESTS;
+    let filtered = requestsList; // Sử dụng state requestsList thay vì hằng số
 
     // Filter by class
     if (filterClass !== "all") {
@@ -156,7 +157,7 @@ export default function TeacherLeaveRequestsPage() {
       filtered = filtered.filter((r) => !r.isNew);
     }
 
-    // Search by student name, parent name, or student ID
+    // Search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -175,31 +176,59 @@ export default function TeacherLeaveRequestsPage() {
     });
 
     return filtered;
-  }, [filterClass, filterStatus, searchQuery, sortBy]);
+  }, [filterClass, filterStatus, searchQuery, sortBy, requestsList]);
+
+  // --- LOGIC CHECKBOX ---
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredRequests.length && filteredRequests.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredRequests.map(r => r.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(itemId => itemId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // --- LOGIC XỬ LÝ DUYỆT/TỪ CHỐI ---
+  const handleBulkAction = (action: "APPROVE" | "REJECT") => {
+    setProcessingId("BULK");
+    
+    setTimeout(() => {
+        // Cập nhật lại danh sách (Giả lập: Xóa các đơn đã xử lý khỏi danh sách hiển thị)
+        // Trong thực tế, bạn sẽ gọi API cập nhật trạng thái
+        setRequestsList(prev => prev.filter(r => !selectedIds.includes(r.id)));
+        
+        setSelectedIds([]);
+        setProcessingId(null);
+        setDialogOpen(false); // Đóng dialog nếu đang mở
+        
+        alert(`Đã ${action === "APPROVE" ? "duyệt" : "từ chối"} ${selectedIds.length} đơn xin phép!`);
+    }, 800);
+  };
 
   // Count new requests
   const newRequestsCount = useMemo(() => {
-    return HARDCODED_LEAVE_REQUESTS.filter((r) => r.isNew).length;
-  }, []);
+    return requestsList.filter((r) => r.isNew).length;
+  }, [requestsList]);
 
-  // Format date to Vietnamese format
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("vi-VN", {
-      weekday: "short",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
+      weekday: "short", year: "numeric", month: "2-digit", day: "2-digit",
     });
   };
 
-  // Calculate days count
   const getDaysCount = (fromDate: string, toDate: string) => {
     const from = new Date(fromDate);
     const to = new Date(toDate);
     const diffTime = Math.abs(to.getTime() - from.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   };
 
   if (isLoading || !user || !isTeacher(user)) {
@@ -222,13 +251,13 @@ export default function TeacherLeaveRequestsPage() {
       <Header user={headerUser} onLogout={logout} />
       <div className="flex">
         <TeacherSidebar user={headerUser} onLogout={logout} />
-        <main className="flex-1 lg:ml-80 min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-          <div className="container mx-auto px-4 py-6 mt-16 lg:mt-0">
+        <main className="flex-1 lg:ml-80 min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+          <div className="container mx-auto px-4 py-6 mt-16 lg:mt-0 relative">
+            
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
               className="mb-8"
             >
               <div className="flex items-center gap-3 mb-4">
@@ -249,6 +278,47 @@ export default function TeacherLeaveRequestsPage() {
               </div>
             </motion.div>
 
+            {/* THANH CÔNG CỤ HÀNG LOẠT (NỔI) */}
+            <AnimatePresence>
+                {selectedIds.length > 0 && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="sticky top-4 z-20 mx-auto w-full max-w-3xl mb-6"
+                    >
+                        <GlassCard className="p-3 shadow-xl border-primary/20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md flex items-center justify-between">
+                            <div className="flex items-center gap-3 px-2">
+                                <div className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md">
+                                    {selectedIds.length}
+                                </div>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">đơn đã chọn</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    size="sm" 
+                                    variant="destructive" 
+                                    onClick={() => handleBulkAction("REJECT")}
+                                    disabled={!!processingId}
+                                    className="h-8"
+                                >
+                                    <X className="h-4 w-4 mr-1.5" /> Từ chối
+                                </Button>
+                                <Button 
+                                    size="sm" 
+                                    className="bg-green-600 hover:bg-green-700 text-white h-8"
+                                    onClick={() => handleBulkAction("APPROVE")}
+                                    disabled={!!processingId}
+                                >
+                                    <Check className="h-4 w-4 mr-1.5" /> Duyệt
+                                </Button>
+                            </div>
+                        </GlassCard>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Stats */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -258,29 +328,20 @@ export default function TeacherLeaveRequestsPage() {
             >
               <GlassCard padding="md">
                 <div className="text-sm text-muted-foreground">Tổng đơn</div>
-                <div className="text-2xl font-bold mt-2">
-                  {HARDCODED_LEAVE_REQUESTS.length}
-                </div>
+                <div className="text-2xl font-bold mt-2">{requestsList.length}</div>
               </GlassCard>
               <GlassCard padding="md">
                 <div className="text-sm text-muted-foreground">Đơn mới</div>
-                <div className="text-2xl font-bold mt-2 text-destructive">
-                  {newRequestsCount}
-                </div>
+                <div className="text-2xl font-bold mt-2 text-destructive">{newRequestsCount}</div>
               </GlassCard>
               <GlassCard padding="md">
                 <div className="text-sm text-muted-foreground">Đã xem xét</div>
-                <div className="text-2xl font-bold mt-2">
-                  {HARDCODED_LEAVE_REQUESTS.filter((r) => !r.isNew).length}
-                </div>
+                <div className="text-2xl font-bold mt-2">{requestsList.filter((r) => !r.isNew).length}</div>
               </GlassCard>
               <GlassCard padding="md">
                 <div className="text-sm text-muted-foreground">Học sinh</div>
                 <div className="text-2xl font-bold mt-2">
-                  {
-                    new Set(HARDCODED_LEAVE_REQUESTS.map((r) => r.studentId))
-                      .size
-                  }
+                  {new Set(requestsList.map((r) => r.studentId)).size}
                 </div>
               </GlassCard>
             </motion.div>
@@ -327,9 +388,7 @@ export default function TeacherLeaveRequestsPage() {
                     <Label htmlFor="status-filter">Trạng thái</Label>
                     <Select
                       value={filterStatus}
-                      onValueChange={(value) =>
-                        setFilterStatus(value as "all" | "new" | "viewed")
-                      }
+                      onValueChange={(value) => setFilterStatus(value as "all" | "new" | "viewed")}
                     >
                       <SelectTrigger id="status-filter">
                         <SelectValue />
@@ -345,17 +404,13 @@ export default function TeacherLeaveRequestsPage() {
                     <Label htmlFor="sort">Sắp xếp</Label>
                     <Select
                       value={sortBy}
-                      onValueChange={(value) =>
-                        setSortBy(value as "date-asc" | "date-desc")
-                      }
+                      onValueChange={(value) => setSortBy(value as "date-asc" | "date-desc")}
                     >
                       <SelectTrigger id="sort">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="date-desc">
-                          Mới nhất trước
-                        </SelectItem>
+                        <SelectItem value="date-desc">Mới nhất trước</SelectItem>
                         <SelectItem value="date-asc">Cũ nhất trước</SelectItem>
                       </SelectContent>
                     </Select>
@@ -375,6 +430,15 @@ export default function TeacherLeaveRequestsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        {/* Checkbox Header */}
+                        <TableHead className="w-[50px] text-center">
+                            <input 
+                                type="checkbox" 
+                                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                                checked={selectedIds.length === filteredRequests.length && filteredRequests.length > 0}
+                                onChange={toggleSelectAll}
+                            />
+                        </TableHead>
                         <TableHead className="w-12"></TableHead>
                         <TableHead>Học sinh</TableHead>
                         <TableHead>Phụ huynh</TableHead>
@@ -388,14 +452,20 @@ export default function TeacherLeaveRequestsPage() {
                     <TableBody>
                       {filteredRequests.length > 0 ? (
                         filteredRequests.map((request) => (
-                          <TableRow key={request.id}>
+                          <TableRow key={request.id} className={selectedIds.includes(request.id) ? "bg-primary/5" : ""}>
+                            {/* Checkbox Row */}
+                            <TableCell className="text-center">
+                                <input 
+                                    type="checkbox" 
+                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                                    checked={selectedIds.includes(request.id)}
+                                    onChange={() => toggleSelectOne(request.id)}
+                                />
+                            </TableCell>
                             <TableCell>
                               {request.isNew && (
-                                <Badge
-                                  variant="destructive"
-                                  className="h-6 w-6 rounded-full flex items-center justify-center p-0 text-xs"
-                                >
-                                  {newRequestsCount}
+                                <Badge variant="destructive" className="h-6 w-6 rounded-full flex items-center justify-center p-0 text-xs">
+                                  N
                                 </Badge>
                               )}
                             </TableCell>
@@ -417,8 +487,7 @@ export default function TeacherLeaveRequestsPage() {
                             </TableCell>
                             <TableCell className="text-center">
                               <div className="text-sm">
-                                {getDaysCount(request.fromDate, request.toDate)}{" "}
-                                ngày
+                                {getDaysCount(request.fromDate, request.toDate)} ngày
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 {formatDate(request.fromDate)}
@@ -442,7 +511,7 @@ export default function TeacherLeaveRequestsPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-8">
+                          <TableCell colSpan={9} className="text-center py-8">
                             <div className="text-muted-foreground">
                               Không có đơn xin vắng học
                             </div>
@@ -467,117 +536,88 @@ export default function TeacherLeaveRequestsPage() {
               Chi tiết đơn xin vắng học
             </DialogTitle>
             {selectedRequest?.isNew && (
-              <Badge variant="destructive" className="w-fit">
-                Mới
-              </Badge>
+              <Badge variant="destructive" className="w-fit">Mới</Badge>
             )}
           </DialogHeader>
           <DialogDescription className="space-y-4">
             {selectedRequest && (
               <>
                 <div>
-                  <label className="text-xs font-semibold text-foreground">
-                    Mã đơn
-                  </label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedRequest.id}
-                  </p>
+                  <label className="text-xs font-semibold text-foreground">Mã đơn</label>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedRequest.id}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-foreground">
-                      Học sinh
-                    </label>
-                    <p className="text-sm font-medium mt-1">
-                      {selectedRequest.studentName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedRequest.studentId}
-                    </p>
+                    <label className="text-xs font-semibold text-foreground">Học sinh</label>
+                    <p className="text-sm font-medium mt-1">{selectedRequest.studentName}</p>
+                    <p className="text-xs text-muted-foreground">{selectedRequest.studentId}</p>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-foreground">
-                      Lớp
-                    </label>
-                    <p className="text-sm font-medium mt-1">
-                      {selectedRequest.class}
-                    </p>
+                    <label className="text-xs font-semibold text-foreground">Lớp</label>
+                    <p className="text-sm font-medium mt-1">{selectedRequest.class}</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-foreground">
-                    Phụ huynh
-                  </label>
-                  <p className="text-sm font-medium mt-1">
-                    {selectedRequest.parentName}
-                  </p>
+                  <label className="text-xs font-semibold text-foreground">Phụ huynh</label>
+                  <p className="text-sm font-medium mt-1">{selectedRequest.parentName}</p>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-foreground">
-                    Lý do xin vắng
-                  </label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedRequest.reason}
-                  </p>
+                  <label className="text-xs font-semibold text-foreground">Lý do xin vắng</label>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedRequest.reason}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-foreground">
-                      Từ ngày
-                    </label>
-                    <p className="text-sm font-medium mt-1">
-                      {formatDate(selectedRequest.fromDate)}
-                    </p>
+                    <label className="text-xs font-semibold text-foreground">Từ ngày</label>
+                    <p className="text-sm font-medium mt-1">{formatDate(selectedRequest.fromDate)}</p>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-foreground">
-                      Đến ngày
-                    </label>
-                    <p className="text-sm font-medium mt-1">
-                      {formatDate(selectedRequest.toDate)}
-                    </p>
+                    <label className="text-xs font-semibold text-foreground">Đến ngày</label>
+                    <p className="text-sm font-medium mt-1">{formatDate(selectedRequest.toDate)}</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-foreground">
-                    Tổng thời gian
-                  </label>
-                  <p className="text-sm font-medium mt-1">
-                    {getDaysCount(
-                      selectedRequest.fromDate,
-                      selectedRequest.toDate
-                    )}{" "}
-                    ngày
-                  </p>
+                  <label className="text-xs font-semibold text-foreground">Tổng thời gian</label>
+                  <p className="text-sm font-medium mt-1">{getDaysCount(selectedRequest.fromDate, selectedRequest.toDate)} ngày</p>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-foreground">
-                    Ngày gửi
-                  </label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {formatDate(selectedRequest.submittedDate)}
-                  </p>
+                  <label className="text-xs font-semibold text-foreground">Ngày gửi</label>
+                  <p className="text-sm text-muted-foreground mt-1">{formatDate(selectedRequest.submittedDate)}</p>
                 </div>
 
                 <div className="pt-4 flex gap-2">
-                  <Button variant="outline" className="flex-1">
+                  <Button 
+                    variant="destructive" 
+                    className="flex-1"
+                    onClick={() => {
+                        // Xử lý từ chối riêng lẻ (tái sử dụng logic Bulk với 1 ID)
+                        setSelectedIds([selectedRequest.id]);
+                        handleBulkAction("REJECT");
+                    }}
+                  >
                     Từ chối
                   </Button>
-                  <Button className="flex-1">Chấp nhận</Button>
+                  <Button 
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                        // Xử lý duyệt riêng lẻ
+                        setSelectedIds([selectedRequest.id]);
+                        handleBulkAction("APPROVE");
+                    }}
+                  >
+                    Chấp nhận
+                  </Button>
                 </div>
               </>
             )}
           </DialogDescription>
         </DialogContent>
       </Dialog>
-
-      <Footer />
     </>
   );
 }
