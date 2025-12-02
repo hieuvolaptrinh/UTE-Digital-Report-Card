@@ -19,7 +19,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare, Send, Bell, Calendar } from "lucide-react";
+import {
+  MessageSquare,
+  Send,
+  Bell,
+  Calendar,
+  Upload,
+  X,
+  Clock,
+  User,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function SchoolNotificationPage() {
   const { user, isLoading, logout } = useAuth();
@@ -30,8 +45,18 @@ export default function SchoolNotificationPage() {
   const [recipient, setRecipient] = useState<
     "all" | "teachers" | "students" | "parents"
   >("all");
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<{
+    id: number;
+    title: string;
+    content: string;
+    priority: "high" | "medium" | "low";
+    recipient: "all" | "teachers" | "students" | "parents";
+    date: string;
+    sentBy: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -46,6 +71,15 @@ export default function SchoolNotificationPage() {
       </div>
     );
   }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setAttachments((prev) => [...prev, ...files]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSend = async () => {
     if (!title.trim() || !content.trim()) {
@@ -65,6 +99,7 @@ export default function SchoolNotificationPage() {
       setContent("");
       setPriority("medium");
       setRecipient("all");
+      setAttachments([]);
       setSent(false);
     }, 3000);
   };
@@ -247,6 +282,53 @@ export default function SchoolNotificationPage() {
                     />
                   </div>
 
+                  <div>
+                    <Label htmlFor="attachments">Tệp đính kèm</Label>
+                    <div className="mt-1.5 border-2 border-dashed border-border rounded-lg p-6 text-center hover:bg-accent/50 transition-colors cursor-pointer">
+                      <input
+                        id="attachments"
+                        type="file"
+                        multiple
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="attachments"
+                        className="flex flex-col items-center gap-2 cursor-pointer"
+                      >
+                        <Upload className="h-6 w-6 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          Kéo thả tệp hoặc nhấp để chọn
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Hỗ trợ các định dạng: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG
+                        </span>
+                      </label>
+                    </div>
+
+                    {attachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-sm font-medium">
+                          Tệp đã chọn ({attachments.length})
+                        </p>
+                        {attachments.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-accent/50 rounded-lg"
+                          >
+                            <span className="text-sm truncate">{file.name}</span>
+                            <button
+                              onClick={() => removeAttachment(index)}
+                              className="p-1 hover:bg-destructive/20 rounded transition-colors"
+                            >
+                              <X className="h-4 w-4 text-destructive" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <Button
                     onClick={handleSend}
                     disabled={sending || !title.trim() || !content.trim()}
@@ -287,7 +369,8 @@ export default function SchoolNotificationPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
-                      className="p-4 rounded-lg border border-border/40 hover:bg-accent/50 transition-colors"
+                      onClick={() => setSelectedNotification(notification)}
+                      className="p-4 rounded-lg border border-border/40 hover:bg-accent/50 transition-colors cursor-pointer"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="font-medium text-sm line-clamp-1">
@@ -322,6 +405,88 @@ export default function SchoolNotificationPage() {
           </div>
         </div>
       </main>
+
+      {/* Notification Detail Modal */}
+      <Dialog
+        open={!!selectedNotification}
+        onOpenChange={(open) => !open && setSelectedNotification(null)}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Chi tiết thông báo
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedNotification && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">
+                  {selectedNotification.title}
+                </h3>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Badge
+                    variant="outline"
+                    className={priorityColors[selectedNotification.priority]}
+                  >
+                    {priorityLabels[selectedNotification.priority]}
+                  </Badge>
+                  <Badge variant="secondary">
+                    {recipientLabels[selectedNotification.recipient]}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 p-3 bg-accent/50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Thời gian đăng</p>
+                    <p className="font-medium">
+                      {new Date(selectedNotification.date).toLocaleDateString(
+                        "vi-VN",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Người đăng</p>
+                    <p className="font-medium">{selectedNotification.sentBy}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Nội dung</h4>
+                <p className="text-sm text-foreground whitespace-pre-wrap">
+                  {selectedNotification.content}
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedNotification(null)}
+                  className="flex-1"
+                >
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </>
   );

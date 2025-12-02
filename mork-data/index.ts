@@ -1,8 +1,13 @@
-// Central export for all mock data
 export * from "./users";
 export * from "./school";
-export * from "./grades";
 export * from "./schedule";
 export * from "./notifications";
-export * from "./requests";
 export * from "./students";
+export * from "./conduct"
+
+export {
+  type Grade,
+  mockGrades,
+} from "./grades";
+
+export * from "./requests";

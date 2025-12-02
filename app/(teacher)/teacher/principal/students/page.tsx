@@ -32,16 +32,26 @@ import {
   mockStudents10A1,
   mockStudents10A2,
   mockStudents11A2,
+  mockStudents10A1_2023,
+  mockStudents10A2_2023,
+  mockStudents11A1_2023,
+  mockStudents11A2_2023,
+  mockStudents12A1_2023,
+  mockStudents12A2_2023,
+  mockStudents12A3_2023,
 } from "@/mork-data/students";
 
 interface Student {
   id: string;
   name: string;
   class: string;
+  grade: string;
+  academicYear: string;
   gender: "male" | "female";
   birthDate: string;
   email: string;
   phone: string;
+  status: "active" | "graduated";
 }
 
 const allStudents: Student[] = [
@@ -49,28 +59,122 @@ const allStudents: Student[] = [
     id: s.studentId,
     name: s.name,
     class: "10A1",
+    grade: "10",
+    academicYear: "2024-2025",
     gender: s.gender,
     birthDate: s.dateOfBirth,
     email: s.email,
     phone: s.phone || "N/A",
+    status: Math.random() > 0.8 ? "graduated" : "active",
   })),
   ...mockStudents10A2.map((s) => ({
     id: s.studentId,
     name: s.name,
     class: "10A2",
+    grade: "10",
+    academicYear: "2024-2025",
     gender: s.gender,
     birthDate: s.dateOfBirth,
     email: s.email,
     phone: s.phone || "N/A",
+    status: Math.random() > 0.9 ? "graduated" : "active",
   })),
   ...mockStudents11A2.map((s) => ({
     id: s.studentId,
     name: s.name,
     class: "11A2",
+    grade: "11",
+    academicYear: "2023-2024",
     gender: s.gender,
     birthDate: s.dateOfBirth,
     email: s.email,
     phone: s.phone || "N/A",
+    status: Math.random() > 0.3 ? "graduated" : "active",
+  })),
+  // 2023-2024 academic year data
+  ...mockStudents10A1_2023.map((s) => ({
+    id: s.studentId,
+    name: s.name,
+    class: "10A1",
+    grade: "10",
+    academicYear: "2023-2024",
+    gender: s.gender,
+    birthDate: s.dateOfBirth,
+    email: s.email,
+    phone: s.phone || "N/A",
+    status: Math.random() > 0.3 ? "graduated" : "active",
+  })),
+  ...mockStudents10A2_2023.map((s) => ({
+    id: s.studentId,
+    name: s.name,
+    class: "10A2",
+    grade: "10",
+    academicYear: "2023-2024",
+    gender: s.gender,
+    birthDate: s.dateOfBirth,
+    email: s.email,
+    phone: s.phone || "N/A",
+    status: Math.random() > 0.25 ? "graduated" : "active",
+  })),
+  ...mockStudents11A1_2023.map((s) => ({
+    id: s.studentId,
+    name: s.name,
+    class: "11A1",
+    grade: "11",
+    academicYear: "2023-2024",
+    gender: s.gender,
+    birthDate: s.dateOfBirth,
+    email: s.email,
+    phone: s.phone || "N/A",
+    status: Math.random() > 0.15 ? "graduated" : "active",
+  })),
+  ...mockStudents11A2_2023.map((s) => ({
+    id: s.studentId,
+    name: s.name,
+    class: "11A2",
+    grade: "11",
+    academicYear: "2023-2024",
+    gender: s.gender,
+    birthDate: s.dateOfBirth,
+    email: s.email,
+    phone: s.phone || "N/A",
+    status: Math.random() > 0.1 ? "graduated" : "active",
+  })),
+  ...mockStudents12A1_2023.map((s) => ({
+    id: s.studentId,
+    name: s.name,
+    class: "12A1",
+    grade: "12",
+    academicYear: "2023-2024",
+    gender: s.gender,
+    birthDate: s.dateOfBirth,
+    email: s.email,
+    phone: s.phone || "N/A",
+    status: Math.random() > 0.05 ? "graduated" : "active",
+  })),
+  ...mockStudents12A2_2023.map((s) => ({
+    id: s.studentId,
+    name: s.name,
+    class: "12A2",
+    grade: "12",
+    academicYear: "2023-2024",
+    gender: s.gender,
+    birthDate: s.dateOfBirth,
+    email: s.email,
+    phone: s.phone || "N/A",
+    status: Math.random() > 0.08 ? "graduated" : "active",
+  })),
+  ...mockStudents12A3_2023.map((s) => ({
+    id: s.studentId,
+    name: s.name,
+    class: "12A3",
+    grade: "12",
+    academicYear: "2023-2024",
+    gender: s.gender,
+    birthDate: s.dateOfBirth,
+    email: s.email,
+    phone: s.phone || "N/A",
+    status: Math.random() > 0.06 ? "graduated" : "active",
   })),
 ];
 
@@ -79,6 +183,8 @@ export default function AllStudentsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [classFilter, setClassFilter] = useState<string>("all");
+  const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const [yearFilter, setYearFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<string>("all");
 
   useEffect(() => {
@@ -101,9 +207,11 @@ export default function AllStudentsPage() {
       student.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesClass = classFilter === "all" || student.class === classFilter;
+    const matchesGrade = gradeFilter === "all" || student.grade === gradeFilter;
+    const matchesYear = yearFilter === "all" || student.academicYear === yearFilter;
     const matchesGender =
       genderFilter === "all" || student.gender === genderFilter;
-    return matchesSearch && matchesClass && matchesGender;
+    return matchesSearch && matchesClass && matchesGrade && matchesYear && matchesGender;
   });
 
   const handleExport = () => {
@@ -133,7 +241,12 @@ export default function AllStudentsPage() {
     link.click();
   };
 
-  const classOptions = ["all", "10A1", "10A2", "11A2", "12A1", "12A2"];
+  const classOptions = [
+    "all",
+    ...Array.from(new Set(allStudents.map((s) => s.class))).sort(),
+  ];
+  const gradeOptions = ["all", ...Array.from(new Set(allStudents.map((s) => s.grade))).sort()];
+  const yearOptions = ["all", ...Array.from(new Set(allStudents.map((s) => s.academicYear))).sort()];
 
   return (
     <>
@@ -181,7 +294,7 @@ export default function AllStudentsPage() {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <GlassCard padding="lg" className="mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -206,16 +319,35 @@ export default function AllStudentsPage() {
                   </SelectContent>
                 </Select>
 
-                <Select value={genderFilter} onValueChange={setGenderFilter}>
+                <Select value={gradeFilter} onValueChange={setGradeFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Lọc theo giới tính" />
+                    <SelectValue placeholder="Lọc theo khối" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="male">Nam</SelectItem>
-                    <SelectItem value="female">Nữ</SelectItem>
+                    <SelectItem value="all">Tất cả khối</SelectItem>
+                    {gradeOptions.slice(1).map((g) => (
+                      <SelectItem key={g} value={g}>
+                        Khối {g}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Lọc theo năm học" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả năm học</SelectItem>
+                    {yearOptions.slice(1).map((y) => (
+                      <SelectItem key={y} value={y}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+
               </div>
             </GlassCard>
           </motion.div>

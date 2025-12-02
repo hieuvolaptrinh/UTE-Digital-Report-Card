@@ -1,9 +1,22 @@
-// components/section/student/grades-table.tsx
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -14,11 +27,47 @@ import {
 } from "@/components/ui/table";
 import { Grade } from "@/mork-data";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { Send, UploadCloud, Check, Info } from "lucide-react";
+
+// --- CẤU HÌNH GIAI ĐOẠN ---
+const MOCK_CONFIG = {
+  isCurrentSemester: true,
+  // 'midterm': Đang giữa kỳ (Ẩn điểm CK, TB, Xếp loại)
+  // 'final': Đã có điểm CK (Hiện tất cả)
+  phase: "midterm" as "midterm" | "final" | "closed",
+};
 
 interface GradesTableProps {
   grades: Grade[];
 }
+
+type SelectedScore = {
+  uniqueId: string;
+  subjectId: string;
+  subjectName: string;
+  teacherName: string;
+  type: string;
+  value: string;
+};
+
+// Logic kiểm tra cột được phép sửa
+const isColumnEditable = (colType: "sub" | "mid" | "final") => {
+  if (!MOCK_CONFIG.isCurrentSemester) return false;
+  switch (MOCK_CONFIG.phase) {
+    case "midterm": return colType === "sub" || colType === "mid";
+    case "final": return colType === "final";
+    default: return false;
+  }
+};
+
+const getPhaseMessage = () => {
+  if (!MOCK_CONFIG.isCurrentSemester) return "Học kỳ đã kết thúc.";
+  switch (MOCK_CONFIG.phase) {
+    case "midterm": return "Đang trong giao đoạn phúc khảo giữa kì";
+    case "final": return "Giai đoạn Cuối kỳ: Đang mở cổng phúc khảo điểm Cuối kỳ.";
+    default: return "Hệ thống chưa mở đợt phúc khảo.";
+  }
+};
 
 const getGradeColor = (average: number) => {
   if (average >= 9.0) return "text-green-600 dark:text-green-400";
@@ -36,108 +85,250 @@ const getGradeLabel = (average: number) => {
 };
 
 export function GradesTable({ grades }: GradesTableProps) {
+  const [selectedScores, setSelectedScores] = useState<SelectedScore[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const toggleScore = (
+    subjectId: string,
+    subjectName: string,
+    teacherName: string,
+    type: string,
+    value: string,
+    index: number
+  ) => {
+    const uniqueId = `${subjectId}-${type}-${index}`;
+    const isSelected = selectedScores.some((s) => s.uniqueId === uniqueId);
+    if (isSelected) {
+      setSelectedScores((prev) => prev.filter((s) => s.uniqueId !== uniqueId));
+    } else {
+      setSelectedScores((prev) => [
+        ...prev,
+        { uniqueId, subjectId, subjectName, teacherName, type, value },
+      ]);
+    }
+  };
+
+  const ScoreCell = ({
+    grade,
+    type,
+    rawScores,
+    editable,
+    isFinalExamColumn = false,
+  }: {
+    grade: Grade;
+    type: string;
+    rawScores: string | number | (string | number)[];
+    editable: boolean;
+    isFinalExamColumn?: boolean;
+  }) => {
+    
+    if (MOCK_CONFIG.phase === "midterm" && isFinalExamColumn) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <span className="text-gray-300 dark:text-gray-700 font-medium select-none text-lg">--</span>
+        </div>
+      );
+    }
+
+    let scoresArray: string[] = [];
+    if (Array.isArray(rawScores)) {
+      scoresArray = rawScores.map((s) => String(s));
+    } else {
+      const stringVal = String(rawScores);
+      scoresArray = stringVal.includes(",") ? stringVal.split(",").map((s) => s.trim()) : [stringVal];
+    }
+
+    if (!editable) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <span className="text-gray-400 dark:text-gray-600 cursor-default text-sm">
+            {scoresArray.join(", ")}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-wrap justify-center gap-1.5 min-w-[80px]">
+        {scoresArray.map((score, idx) => {
+          const uniqueId = `${grade.subjectId}-${type}-${idx}`;
+          const isSelected = selectedScores.some((s) => s.uniqueId === uniqueId);
+          return (
+            <button
+              key={uniqueId}
+              onClick={() => toggleScore(grade.subjectId, grade.subjectName, grade.teacherName, type, score, idx)}
+              className={`
+                relative px-2.5 py-1 min-w-[36px] rounded-md text-sm font-bold transition-all duration-200 border
+                ${
+                  isSelected
+                    ? "bg-blue-600 text-white border-blue-600 shadow-md scale-110 z-10"
+                    : "bg-white dark:bg-zinc-800 text-blue-600 border-blue-200 dark:border-blue-900 hover:border-blue-500 hover:shadow-sm"
+                }
+              `}
+            >
+              {score}
+              {isSelected && (
+                <div className="absolute -top-1.5 -right-1.5 bg-white text-blue-600 rounded-full p-0.5 shadow-sm border border-gray-100">
+                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <GlassCard padding="none">
-        <div className="p-4 sm:p-6 border-b border-white/10">
-          <h3 className="text-lg font-semibold">Bảng điểm chi tiết</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Học kỳ {grades[0]?.semester} - Năm học {grades[0]?.academicYear}
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="font-semibold">Môn học</TableHead>
-                <TableHead className="text-center font-semibold">
-                  Miệng
-                </TableHead>
-                <TableHead className="text-center font-semibold">
-                  15 phút
-                </TableHead>
-                <TableHead className="text-center font-semibold">
-                  1 tiết
-                </TableHead>
-                <TableHead className="text-center font-semibold">
-                  Giữa kỳ
-                </TableHead>
-                <TableHead className="text-center font-semibold">
-                  Cuối kỳ
-                </TableHead>
-                <TableHead className="text-center font-semibold">
-                  Trung bình
-                </TableHead>
-                <TableHead className="font-semibold">Xếp loại</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {grades.map((grade, index) => (
-                <motion.tr
-                  key={`${grade.studentId}-${grade.subjectId}-${grade.semester}`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className="border-white/10 hover:bg-white/5 dark:hover:bg-black/5"
+    <div className="flex justify-center w-full px-4 sm:px-0">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-7xl"
+      >
+        <GlassCard padding="none">
+          <div className="p-4 sm:p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-blue-50/50 dark:bg-blue-900/10">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Bảng điểm chi tiết</h3>
+              <div className="flex items-center gap-2 mt-1 text-sm font-medium text-blue-600 dark:text-blue-400">
+                <Info className="w-4 h-4" />
+                {getPhaseMessage()}
+              </div>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  disabled={selectedScores.length === 0}
+                  className={`transition-all duration-300 gap-2 ${
+                    selectedScores.length === 0
+                      ? "opacity-50 cursor-not-allowed bg-gray-200 text-gray-400"
+                      : "bg-primary text-white shadow-md hover:scale-105"
+                  }`}
                 >
-                  <TableCell className="font-medium">
-                    <Link
-                      href="/student/subject-detail"
-                      className="flex items-center justify-between group"
-                    >
+                  <Send className="w-4 h-4" />
+                  Gửi yêu cầu ({selectedScores.length})
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">Yêu cầu sửa điểm</DialogTitle>
+                  <DialogDescription>
+                    Vui lòng điền thông tin chi tiết cho <strong>{selectedScores.length}</strong> điểm đã chọn.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-4 bg-gray-50 dark:bg-zinc-900/50 p-3 rounded-lg border border-gray-100 dark:border-zinc-800 max-h-[120px] overflow-y-auto space-y-2">
+                  {selectedScores.map((item) => (
+                    <div key={item.uniqueId} className="flex justify-between items-center text-sm p-2 bg-white dark:bg-zinc-800 rounded shadow-sm border border-gray-100 dark:border-zinc-700">
                       <div>
-                        <div className="group-hover:text-primary transition-colors">
-                          {grade.subjectName}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          GV: {grade.teacherName}
-                        </div>
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">{item.subjectName}</span>
+                        <span className="text-xs text-muted-foreground ml-2">({item.teacherName})</span>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {grade.scores.oral.join(", ")}
-                  </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {grade.scores.test15min.join(", ")}
-                  </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {grade.scores.test45min.join(", ")}
-                  </TableCell>
-                  <TableCell className="text-center font-medium">
-                    {grade.scores.midterm}
-                  </TableCell>
-                  <TableCell className="text-center font-medium">
-                    {grade.scores.final}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span
-                      className={`text-lg font-bold ${getGradeColor(
-                        grade.average
-                      )}`}
-                    >
-                      {grade.average.toFixed(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={grade.average >= 8.0 ? "default" : "secondary"}
-                      className="text-xs"
-                    >
-                      {getGradeLabel(grade.average)}
-                    </Badge>
-                  </TableCell>
-                </motion.tr>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </GlassCard>
-    </motion.div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-[10px]">{item.type}</Badge>
+                        <span className="font-bold text-blue-600">{item.value}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid gap-5 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="score" className="text-sm font-semibold">Điểm đề xuất <span className="text-red-500">*</span></Label>
+                    <Input id="score" placeholder="Nhập điểm bạn cho rằng đúng (0-10)" type="number" step="0.1" max={10} min={0} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="reason" className="text-sm font-semibold">Lý do <span className="text-red-500">*</span></Label>
+                    <Textarea id="reason" placeholder="Mô tả chi tiết lý do..." className="h-24 resize-none" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-sm font-semibold">Minh chứng</Label>
+                    <div className="border-2 border-dashed border-gray-200 dark:border-zinc-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors">
+                      <UploadCloud className="w-5 h-5 text-blue-500" />
+                      <span className="text-xs text-gray-500 mt-2">Nhấn để tải ảnh</span>
+                      <Input type="file" className="hidden" />
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">Gửi yêu cầu</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* TABLE CONTENT */}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead className="font-semibold min-w-[180px]">Môn học</TableHead>
+                  <TableHead className={`text-center font-semibold ${isColumnEditable("sub") ? "text-blue-600" : "text-gray-400"}`}>Miệng</TableHead>
+                  <TableHead className={`text-center font-semibold ${isColumnEditable("sub") ? "text-blue-600" : "text-gray-400"}`}>15 phút</TableHead>
+                  <TableHead className={`text-center font-semibold ${isColumnEditable("sub") ? "text-blue-600" : "text-gray-400"}`}>1 tiết</TableHead>
+                  <TableHead className={`text-center font-semibold ${isColumnEditable("mid") ? "text-blue-600" : "text-gray-400"}`}>Giữa kỳ</TableHead>
+                  <TableHead className={`text-center font-semibold ${isColumnEditable("final") ? "text-blue-600" : "text-gray-400"}`}>Cuối kỳ</TableHead>
+                  <TableHead className="text-center font-semibold text-gray-800 dark:text-gray-200">Trung bình</TableHead>
+                  <TableHead className="font-semibold text-center">Xếp loại</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {grades.map((grade, index) => (
+                  <motion.tr
+                    key={`${grade.studentId}-${grade.subjectId}-${grade.semester}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="border-white/10 hover:bg-white/5 dark:hover:bg-black/5"
+                  >
+                    <TableCell className="font-medium py-4">
+                      <Link href="/student/subject-detail" className="flex items-center justify-between group">
+                        <div>
+                          <div className="group-hover:text-primary transition-colors font-semibold">{grade.subjectName}</div>
+                          <div className="text-xs text-muted-foreground mt-1">GV: {grade.teacherName}</div>
+                        </div>
+                      </Link>
+                    </TableCell>
+
+                    <TableCell className="text-center"><ScoreCell grade={grade} type="Miệng" rawScores={grade.scores.oral} editable={isColumnEditable("sub")} /></TableCell>
+                    <TableCell className="text-center"><ScoreCell grade={grade} type="15 phút" rawScores={grade.scores.test15min} editable={isColumnEditable("sub")} /></TableCell>
+                    <TableCell className="text-center"><ScoreCell grade={grade} type="1 tiết" rawScores={grade.scores.test45min} editable={isColumnEditable("sub")} /></TableCell>
+                    <TableCell className="text-center"><ScoreCell grade={grade} type="Giữa kỳ" rawScores={grade.scores.midterm} editable={isColumnEditable("mid")} /></TableCell>
+                    
+                    <TableCell className="text-center">
+                      <ScoreCell 
+                        grade={grade} type="Cuối kỳ" rawScores={grade.scores.final} 
+                        editable={isColumnEditable("final")} isFinalExamColumn={true} 
+                      />
+                    </TableCell>
+
+                    <TableCell className="text-center">
+                      {MOCK_CONFIG.phase === 'midterm' ? (
+                        <span className="text-gray-300 dark:text-gray-700 text-lg font-medium">--</span>
+                      ) : (
+                        <span className={`text-lg font-bold ${getGradeColor(grade.average)}`}>{grade.average.toFixed(1)}</span>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="text-center">
+                      {MOCK_CONFIG.phase === 'midterm' ? (
+                        <span className="text-gray-300 dark:text-gray-700 text-sm">--</span>
+                      ) : (
+                        <Badge variant={grade.average >= 8.0 ? "default" : "secondary"} className="text-xs">{getGradeLabel(grade.average)}</Badge>
+                      )}
+                    </TableCell>
+                  </motion.tr>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </GlassCard>
+      </motion.div>
+    </div>
   );
 }

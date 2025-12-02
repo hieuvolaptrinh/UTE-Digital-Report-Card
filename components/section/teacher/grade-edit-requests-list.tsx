@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import Image from "next/image";
 import { GlassCard } from "@/components/ui/glass-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -15,405 +12,244 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { mockGradeEditRequests, GradeEditRequest } from "@/mork-data";
-import {
-  FileText,
-  Eye,
-  Clock,
-  CheckCircle,
-  XCircle,
-  ImageIcon,
-} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Check, X, CheckSquare } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Mock Data
+const MOCK_REQUESTS = [
+  {
+    id: "REQ001",
+    studentName: "Nguyễn Văn A",
+    studentId: "2024001",
+    class: "10A1",
+    subject: "Toán học",
+    type: "Kiểm tra 15 phút",
+    oldScore: 6.5,
+    newScore: 8.5,
+    reason: "Em bị nhập nhầm điểm cột 1 với bạn bên cạnh ạ",
+    date: "2024-03-20",
+    status: "PENDING"
+  },
+  {
+    id: "REQ002",
+    studentName: "Trần Thị B",
+    studentId: "2024002",
+    class: "10A1",
+    subject: "Toán học",
+    type: "Kiểm tra 1 tiết",
+    oldScore: 7.0,
+    newScore: 7.5,
+    reason: "Thầy chấm sót câu trắc nghiệm cuối cùng",
+    date: "2024-03-21",
+    status: "PENDING"
+  },
+  {
+    id: "REQ003",
+    studentName: "Lê Văn C",
+    studentId: "2024003",
+    class: "10A2",
+    subject: "Vật lý",
+    type: "Giữa kỳ",
+    oldScore: 5.0,
+    newScore: 8.0,
+    reason: "Điểm trên web khác với bài thi em được trả",
+    date: "2024-03-22",
+    status: "PENDING"
+  },
+];
 
 export function GradeEditRequestsList() {
-  const [requests, setRequests] = useState<GradeEditRequest[]>(
-    mockGradeEditRequests
-  );
-  const [selectedRequest, setSelectedRequest] =
-    useState<GradeEditRequest | null>(null);
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
+  const [requests, setRequests] = useState(MOCK_REQUESTS);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      pending: {
-        label: "Chờ duyệt",
-        color: "bg-orange-500/10 text-orange-600",
-        icon: Clock,
-      },
-      approved: {
-        label: "Đã duyệt",
-        color: "bg-green-500/10 text-green-600",
-        icon: CheckCircle,
-      },
-      rejected: {
-        label: "Từ chối",
-        color: "bg-red-500/10 text-red-600",
-        icon: XCircle,
-      },
-    };
-    return badges[status as keyof typeof badges] || badges.pending;
+  // --- LOGIC CHECKBOX ---
+  // Chọn tất cả / Bỏ chọn tất cả
+  const toggleSelectAll = () => {
+    if (selectedIds.length === requests.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(requests.map(r => r.id));
+    }
   };
 
-  const getScoreTypeName = (type: string) => {
-    const types: { [key: string]: string } = {
-      oral: "Miệng",
-      test15min: "15 phút",
-      test45min: "1 tiết",
-      midterm: "Giữa kỳ",
-      final: "Cuối kỳ",
-    };
-    return types[type] || type;
+  // Chọn từng dòng
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(itemId => itemId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
   };
+
+  // --- LOGIC XỬ LÝ DUYỆT/TỪ CHỐI ---
+  const handleAction = async (ids: string[], action: "APPROVE" | "REJECT") => {
+    // Giả lập gọi API
+    setProcessingId(ids.length === 1 ? ids[0] : "BULK"); // Đánh dấu đang xử lý
+    
+    setTimeout(() => {
+        // Xóa các yêu cầu đã xử lý khỏi danh sách (Giả lập cập nhật trạng thái)
+        setRequests(prev => prev.filter(r => !ids.includes(r.id)));
+        setSelectedIds([]);
+        setProcessingId(null);
+        alert(`Đã ${action === "APPROVE" ? "duyệt" : "từ chối"} ${ids.length} yêu cầu thành công!`);
+    }, 800);
+  };
+
+  if (requests.length === 0) {
+    return (
+        <GlassCard className="p-12 text-center flex flex-col items-center justify-center text-muted-foreground">
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-full mb-4">
+                <CheckSquare className="h-8 w-8 text-gray-400" />
+            </div>
+            <p>Hiện không có yêu cầu sửa điểm nào cần xử lý.</p>
+        </GlassCard>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <GlassCard padding="md">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Yêu cầu sửa điểm</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Danh sách yêu cầu sửa điểm đã gửi
-            </p>
-          </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {requests.filter((r) => r.status === "pending").length} chờ duyệt
-          </Badge>
-        </div>
-      </GlassCard>
+    <div className="space-y-4 relative">
+      
+      {/* THANH CÔNG CỤ HÀNG LOẠT (NỔI) - Chỉ hiện khi có chọn */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="sticky top-4 z-10 mx-auto w-full max-w-3xl"
+            >
+                <GlassCard className="p-3 shadow-xl border-primary/20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md flex items-center justify-between">
+                    <div className="flex items-center gap-3 px-2">
+                        <div className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md">
+                            {selectedIds.length}
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">yêu cầu đã chọn</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            size="sm" 
+                            variant="destructive" 
+                            onClick={() => handleAction(selectedIds, "REJECT")}
+                            disabled={!!processingId}
+                            className="h-8"
+                        >
+                            <X className="h-4 w-4 mr-1.5" /> Từ chối tất cả
+                        </Button>
+                        <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700 text-white h-8"
+                            onClick={() => handleAction(selectedIds, "APPROVE")}
+                            disabled={!!processingId}
+                        >
+                            <Check className="h-4 w-4 mr-1.5" /> Duyệt tất cả
+                        </Button>
+                    </div>
+                </GlassCard>
+            </motion.div>
+        )}
+      </AnimatePresence>
 
-      <GlassCard padding="none">
+      <GlassCard className="overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
-              <TableRow className="border-white/10">
-                <TableHead>Mã YC</TableHead>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                {/* Checkbox Header */}
+                <TableHead className="w-[50px] text-center">
+                    <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                        checked={selectedIds.length === requests.length && requests.length > 0}
+                        onChange={toggleSelectAll}
+                    />
+                </TableHead>
                 <TableHead>Học sinh</TableHead>
-                <TableHead>Lớp</TableHead>
-                <TableHead>Môn học</TableHead>
-                <TableHead>Loại điểm</TableHead>
-                <TableHead>Điểm hiện tại</TableHead>
-                <TableHead>Điểm đề xuất</TableHead>
-                <TableHead>Ngày gửi</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead>Môn học / Lớp</TableHead>
+                <TableHead>Đầu điểm</TableHead>
+                <TableHead className="text-center">Thay đổi</TableHead>
+                <TableHead className="w-[300px]">Lý do</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {requests.map((request, index) => {
-                const statusInfo = getStatusBadge(request.status);
-                const StatusIcon = statusInfo.icon;
-
-                return (
-                  <motion.tr
-                    key={request.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="border-white/10"
-                  >
-                    <TableCell className="font-mono text-sm">
-                      {request.id}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {request.studentName}
-                    </TableCell>
-                    <TableCell>{request.class}</TableCell>
-                    <TableCell>{request.subject}</TableCell>
-                    <TableCell>{getScoreTypeName(request.scoreType)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{request.oldScore}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-blue-500/10 text-blue-600">
-                        {request.newScore}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(request.requestedAt).toLocaleDateString(
-                        "vi-VN"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusInfo.color}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
-                        {statusInfo.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {/* Dialog xem chi tiết */}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1"
-                            onClick={() => setSelectedRequest(request)}
-                          >
-                            <Eye className="h-4 w-4" />
-                            Chi tiết
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
-                          <DialogHeader className="flex-shrink-0">
-                            <DialogTitle>Chi tiết yêu cầu sửa điểm</DialogTitle>
-                          </DialogHeader>
-
-                          {selectedRequest && (
-                            <div className="flex-1 mt-4 space-y-4 overflow-y-auto pr-2">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Mã yêu cầu
-                                  </p>
-                                  <p className="font-semibold font-mono">
-                                    {selectedRequest.id}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Trạng thái
-                                  </p>
-                                  <Badge
-                                    className={
-                                      getStatusBadge(selectedRequest.status)
-                                        .color
-                                    }
-                                  >
-                                    {
-                                      getStatusBadge(selectedRequest.status)
-                                        .label
-                                    }
-                                  </Badge>
-                                </div>
-                              </div>
-
-                              <div className="border-t pt-4">
-                                <h4 className="font-semibold mb-2">
-                                  Thông tin học sinh
-                                </h4>
-                                <div className="grid grid-cols-2 gap-3 text-sm">
-                                  <div>
-                                    <p className="text-muted-foreground">
-                                      Họ tên
-                                    </p>
-                                    <p>{selectedRequest.studentName}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">Lớp</p>
-                                    <p>{selectedRequest.class}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">
-                                      Môn học
-                                    </p>
-                                    <p>{selectedRequest.subject}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">
-                                      Ngày gửi
-                                    </p>
-                                    <p>
-                                      {new Date(
-                                        selectedRequest.requestedAt
-                                      ).toLocaleDateString("vi-VN")}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="border-t pt-4">
-                                <h4 className="font-semibold mb-2">
-                                  Thông tin điểm
-                                </h4>
-                                <div className="grid grid-cols-3 gap-3">
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">
-                                      Loại điểm
-                                    </p>
-                                    <Badge variant="outline">
-                                      {getScoreTypeName(
-                                        selectedRequest.scoreType
-                                      )}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">
-                                      Điểm hiện tại
-                                    </p>
-                                    <p className="text-lg font-bold text-red-600">
-                                      {selectedRequest.oldScore}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">
-                                      Điểm đề xuất
-                                    </p>
-                                    <p className="text-lg font-bold text-green-600">
-                                      {selectedRequest.newScore}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="border-t pt-4">
-                                <h4 className="font-semibold mb-2">Lý do</h4>
-                                <p className="text-sm bg-muted p-3 rounded-md">
-                                  {selectedRequest.reason}
-                                </p>
-                              </div>
-
-                              <div className="border-t pt-4">
-                                <h4 className="font-semibold mb-3 flex items-center gap-2">
-                                  <ImageIcon className="h-4 w-4" />
-                                  Hình ảnh bài kiểm tra
-                                </h4>
-                                <div className="bg-muted/30 rounded-lg p-4">
-                                  <div className="relative w-full max-w-2xl mx-auto">
-                                    {/* Container chiếm chiều cao theo viewport, nội dung cuộn được */}
-                                    <div className="max-h-[50vh] overflow-auto rounded-md border-2 border-border shadow-lg">
-                                      <Image
-                                        src="/baiktr.jpg"
-                                        alt="Bài kiểm tra"
-                                        width={800}
-                                        height={600}
-                                        className="w-full h-auto"
-                                        priority
-                                      />
-                                    </div>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                                    Bài kiểm tra do học sinh tải lên
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="border-t pt-4">
-                                <div className="text-sm text-muted-foreground">
-                                  <p>
-                                    Người gửi: {selectedRequest.teacherName}
-                                  </p>
-                                  <p>
-                                    Ngày gửi:{" "}
-                                    {new Date(
-                                      selectedRequest.requestedAt
-                                    ).toLocaleString("vi-VN")}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {selectedRequest.reviewNote && (
-                                <div className="border-t pt-4">
-                                  <h4 className="font-semibold mb-2">
-                                    Phản hồi từ ban giám hiệu
-                                  </h4>
-                                  <div className="bg-blue-500/5 border border-blue-500/20 rounded-md p-3">
-                                    <p className="text-sm mb-2">
-                                      {selectedRequest.reviewNote}
-                                    </p>
-                                    <div className="text-xs text-muted-foreground">
-                                      <p>
-                                        Người duyệt:{" "}
-                                        {selectedRequest.reviewedBy}
-                                      </p>
-                                      <p>
-                                        {selectedRequest.reviewedAt
-                                          ? new Date(
-                                              selectedRequest.reviewedAt
-                                            ).toLocaleString("vi-VN")
-                                          : ""}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {selectedRequest.status === "pending" && (
-                                <div className="border-t pt-4 flex justify-end gap-2">
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => setShowRejectDialog(true)}
-                                  >
-                                    <XCircle className="h-4 w-4 mr-2" />
-                                    Từ chối
-                                  </Button>
-                                  <Button
-                                    onClick={() => {
-                                      window.location.href = `/teacher/class/10A1/2024001`;
-                                    }}
-                                  >
-                                    <FileText className="h-4 w-4 mr-2" />
-                                    Sửa ngay
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-
-                      {/* Reject Dialog */}
-                      <Dialog
-                        open={showRejectDialog}
-                        onOpenChange={setShowRejectDialog}
-                      >
-                        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Từ chối yêu cầu sửa điểm</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground mb-2">
-                                Nhập lý do từ chối yêu cầu sửa điểm
-                              </p>
-                              <Textarea
-                                value={rejectReason}
-                                onChange={(e) =>
-                                  setRejectReason(e.target.value)
-                                }
-                                placeholder="Nhập lý do từ chối..."
-                                rows={4}
-                                className="resize-none"
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setShowRejectDialog(false);
-                                setRejectReason("");
-                              }}
-                            >
-                              Hủy
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              onClick={() => {
-                                // TODO: Handle reject logic here
-                                console.log("Reject reason:", rejectReason);
-                                setShowRejectDialog(false);
-                                setRejectReason("");
-                              }}
-                              disabled={!rejectReason.trim()}
-                            >
-                              Xác nhận từ chối
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </motion.tr>
-                );
-              })}
+              {requests.map((req) => (
+                <TableRow key={req.id} className={selectedIds.includes(req.id) ? "bg-primary/5" : ""}>
+                  {/* Checkbox Row */}
+                  <TableCell className="text-center">
+                    <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                        checked={selectedIds.includes(req.id)}
+                        onChange={() => toggleSelectOne(req.id)}
+                    />
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${req.studentId}`} />
+                            <AvatarFallback>{req.studentName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <div className="font-medium">{req.studentName}</div>
+                            <div className="text-xs text-muted-foreground">{req.studentId}</div>
+                        </div>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="font-medium text-sm">{req.subject}</div>
+                    <Badge variant="outline" className="text-xs font-normal bg-white">Lớp {req.class}</Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="secondary" className="font-normal">{req.type}</Badge>
+                    <div className="text-xs text-muted-foreground mt-1">{req.date}</div>
+                  </TableCell>
+                  
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2 font-mono text-sm">
+                        <span className="text-muted-foreground line-through decoration-red-400 decoration-2">{req.oldScore}</span>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-200">{req.newScore}</span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <p className="text-sm text-muted-foreground line-clamp-2" title={req.reason}>
+                        "{req.reason}"
+                    </p>
+                  </TableCell>
+                  
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleAction([req.id], "REJECT")}
+                            disabled={!!processingId}
+                            title="Từ chối"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleAction([req.id], "APPROVE")}
+                            disabled={!!processingId}
+                            title="Chấp nhận"
+                        >
+                            <Check className="h-4 w-4" />
+                        </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>

@@ -161,11 +161,6 @@ const navigationConfig: NavItem[] = [
         icon: LayoutDashboard,
       },
       {
-        label: "Quản lý giáo viên",
-        href: "/teacher/principal/teachers",
-        icon: Users,
-      },
-      {
         label: "Phê duyệt sửa điểm",
         href: "/teacher/principal/list-sua-diem",
         icon: ClipboardList,

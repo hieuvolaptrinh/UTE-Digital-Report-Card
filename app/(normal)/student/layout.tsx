@@ -43,9 +43,9 @@ export default function StudentLayout({
   return (
     <div className="flex min-h-screen flex-col">
       {showNavigation && (
-        <nav className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-lg border-b border-white/10 sticky top-0 z-10">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-2 py-3 overflow-x-auto">
+        <nav className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-lg border-b border-white/10 sticky top-16 z-10">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
               {navigation.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
@@ -54,7 +54,7 @@ export default function StudentLayout({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0",
                       isActive
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-white/50 dark:hover:bg-gray-800/50 hover:text-foreground"
