@@ -205,12 +205,6 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
           roles: ["principal"],
         },
         {
-          label: "Quản lý giáo viên",
-          href: "/teacher/principal/teacher",
-          icon: UserCog,
-          roles: ["principal"],
-        },
-        {
           label: "Thông báo toàn trường",
           href: "/teacher/principal/notification",
           icon: MessageSquare,
