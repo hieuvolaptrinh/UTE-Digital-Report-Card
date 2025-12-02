@@ -54,7 +54,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
   mockGradeDeadlines,
-  mockSubjects,
+  mockAcademicYears,
   mockGrades,
   mockSemesters,
   calculateEditDeadline,
@@ -68,6 +68,7 @@ export default function GradeDeadlineManagementPage() {
   const [filterGrade, setFilterGrade] = React.useState<string>("all");
   const [filterSemester, setFilterSemester] = React.useState<string>("all");
   const [filterStatus, setFilterStatus] = React.useState<string>("all");
+  const [filterAcademicYear, setFilterAcademicYear] = React.useState<string>("all");
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [editingDeadline, setEditingDeadline] =
@@ -76,7 +77,7 @@ export default function GradeDeadlineManagementPage() {
 
   // Form state
   const [formData, setFormData] = React.useState({
-    subject: "",
+    academicYear: "2024-2025",
     grade: "",
     semester: 1,
     entryStartDate: new Date(),
@@ -88,7 +89,7 @@ export default function GradeDeadlineManagementPage() {
   const filteredDeadlines = React.useMemo(() => {
     return deadlines.filter((deadline) => {
       const matchSearch =
-        deadline.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        deadline.academicYear.includes(searchTerm) ||
         deadline.grade.includes(searchTerm);
       const matchGrade =
         filterGrade === "all" || deadline.grade === filterGrade;
@@ -97,10 +98,12 @@ export default function GradeDeadlineManagementPage() {
         deadline.semester.toString() === filterSemester;
       const matchStatus =
         filterStatus === "all" || deadline.status === filterStatus;
+      const matchAcademicYear =
+        filterAcademicYear === "all" || deadline.academicYear === filterAcademicYear;
 
-      return matchSearch && matchGrade && matchSemester && matchStatus;
+      return matchSearch && matchGrade && matchSemester && matchStatus && matchAcademicYear;
     });
-  }, [deadlines, searchTerm, filterGrade, filterSemester, filterStatus]);
+  }, [deadlines, searchTerm, filterGrade, filterSemester, filterStatus, filterAcademicYear]);
 
   // Handle save deadline
   const handleSaveDeadline = () => {
@@ -220,14 +223,14 @@ export default function GradeDeadlineManagementPage() {
               Quản lý thời gian nhập & sửa điểm
             </h1>
             <p className="text-muted-foreground mt-1">
-              Thiết lập thời gian nhập điểm và sửa điểm theo môn học, khối
+              Thiết lập thời gian nhập điểm và sửa điểm theo năm học, khối
             </p>
           </div>
           <Button
             onClick={() => {
               setEditingDeadline(null);
               setFormData({
-                subject: "",
+                academicYear: "2024-2025",
                 grade: "",
                 semester: 1,
                 entryStartDate: new Date(),
@@ -309,12 +312,26 @@ export default function GradeDeadlineManagementPage() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm môn học, khối..."
+                  placeholder="Tìm kiếm năm học, khối..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
                 />
               </div>
+              <Select value={filterAcademicYear} onValueChange={setFilterAcademicYear}>
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Năm học" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  {mockAcademicYears.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={filterGrade} onValueChange={setFilterGrade}>
                 <SelectTrigger className="w-full md:w-[150px]">
                   <Filter className="h-4 w-4 mr-2" />
@@ -371,7 +388,7 @@ export default function GradeDeadlineManagementPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Môn học</TableHead>
+                    <TableHead>Năm học</TableHead>
                     <TableHead>Khối</TableHead>
                     <TableHead>Học kỳ</TableHead>
                     <TableHead>Bắt đầu nhập</TableHead>
@@ -395,7 +412,7 @@ export default function GradeDeadlineManagementPage() {
                     filteredDeadlines.map((deadline) => (
                       <TableRow key={deadline.id}>
                         <TableCell className="font-medium">
-                          {deadline.subject}
+                          {deadline.academicYear}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">Khối {deadline.grade}</Badge>
@@ -459,20 +476,20 @@ export default function GradeDeadlineManagementPage() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Môn học *</Label>
+                <Label>Năm học *</Label>
                 <Select
-                  value={formData.subject}
+                  value={formData.academicYear}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, subject: value })
+                    setFormData({ ...formData, academicYear: value })
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn môn học" />
+                    <SelectValue placeholder="Chọn năm học" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockSubjects.map((subject) => (
-                      <SelectItem key={subject} value={subject}>
-                        {subject}
+                    {mockAcademicYears.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -632,7 +649,7 @@ export default function GradeDeadlineManagementPage() {
             <Button
               onClick={handleSaveDeadline}
               disabled={
-                !formData.subject ||
+                !formData.academicYear ||
                 !formData.grade ||
                 !formData.entryStartDate ||
                 !formData.entryEndDate ||
