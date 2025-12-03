@@ -41,10 +41,21 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const [newUser, setNewUser] = useState({
     username: "",
     password: "",
+    email: "",
+    name: "",
+    role: "student",
+    phone: "",
+  });
+
+  const [editUser, setEditUser] = useState({
+    id: "",
+    username: "",
     email: "",
     name: "",
     role: "student",
@@ -56,6 +67,7 @@ export default function AdminPage() {
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    ``;
     const matchesRole = roleFilter === "all" || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -86,6 +98,8 @@ export default function AdminPage() {
 
   const handleAddUser = () => {
     console.log("Adding user:", newUser);
+    // TODO: Call API to add user
+    alert("Thêm tài khoản thành công!");
     setIsAddDialogOpen(false);
     setNewUser({
       username: "",
@@ -97,9 +111,32 @@ export default function AdminPage() {
     });
   };
 
-  const handleDeleteUser = (userId: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
+  const handleEditClick = (user: any) => {
+    setSelectedUser(user);
+    setEditUser({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      phone: user.phone || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditUser = () => {
+    console.log("Editing user:", editUser);
+    // TODO: Call API to update user
+    alert("Cập nhật tài khoản thành công!");
+    setIsEditDialogOpen(false);
+    setSelectedUser(null);
+  };
+
+  const handleDeleteUser = (userId: string, userName: string) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa tài khoản "${userName}"?`)) {
       console.log("Deleting user:", userId);
+      // TODO: Call API to delete user
+      alert("Xóa tài khoản thành công!");
     }
   };
 
@@ -369,14 +406,16 @@ export default function AdminPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => console.log("Edit user:", u.id)}
+                              onClick={() => handleEditClick(u)}
+                              title="Sửa"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteUser(u.id)}
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              title="Xóa"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -391,6 +430,101 @@ export default function AdminPage() {
           </motion.div>
         </div>
       </main>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa tài khoản</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Họ và tên</Label>
+              <Input
+                value={editUser.name}
+                onChange={(e) =>
+                  setEditUser({ ...editUser, name: e.target.value })
+                }
+                placeholder="Nguyễn Văn A"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <Input
+                value={editUser.username}
+                onChange={(e) =>
+                  setEditUser({ ...editUser, username: e.target.value })
+                }
+                placeholder="nguyenvana"
+                disabled
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={editUser.email}
+                onChange={(e) =>
+                  setEditUser({ ...editUser, email: e.target.value })
+                }
+                placeholder="email@ute.udn.vn"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Vai trò</Label>
+              <Select
+                value={editUser.role}
+                onValueChange={(value) =>
+                  setEditUser({ ...editUser, role: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Học sinh</SelectItem>
+                  <SelectItem value="teacher">Giáo viên</SelectItem>
+                  <SelectItem value="principal">Hiệu trưởng</SelectItem>
+                  <SelectItem value="academic-officer">
+                    Cán bộ học vụ
+                  </SelectItem>
+                  <SelectItem value="parent">Phụ huynh</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Số điện thoại</Label>
+              <Input
+                value={editUser.phone}
+                onChange={(e) =>
+                  setEditUser({ ...editUser, phone: e.target.value })
+                }
+                placeholder="0901234567"
+              />
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 border">
+              <p className="text-sm text-muted-foreground">
+                <strong>Lưu ý:</strong> Để đổi mật khẩu, vui lòng sử dụng chức
+                năng "Đặt lại mật khẩu" riêng.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditDialogOpen(false);
+                setSelectedUser(null);
+              }}
+            >
+              Hủy
+            </Button>
+            <Button onClick={handleEditUser}>Lưu thay đổi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </>
   );
