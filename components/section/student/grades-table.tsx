@@ -1,22 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Table,
   TableBody,
@@ -27,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Grade } from "@/mork-data";
 import Link from "next/link";
-import { Send, UploadCloud, Check, Info } from "lucide-react";
+import { Check, Info } from "lucide-react";
 
 // --- CẤU HÌNH GIAI ĐOẠN ---
 const MOCK_CONFIG = {
@@ -51,18 +38,13 @@ const REJECTED_REQUESTS = new Set([
   "VAN-Miệng-2", // Văn: Điểm miệng thứ 3 (7.5 điểm) - Bị từ chối
 ]);
 
+import { ScoreItem } from "./grade-edit-request-popup";
+
 interface GradesTableProps {
   grades: Grade[];
+  selectedScores?: ScoreItem[];
+  onScoreSelect?: (scores: ScoreItem[]) => void;
 }
-
-type SelectedScore = {
-  uniqueId: string;
-  subjectId: string;
-  subjectName: string;
-  teacherName: string;
-  type: string;
-  value: string;
-};
 
 // Logic kiểm tra cột được phép sửa
 const isColumnEditable = (colType: "sub" | "mid" | "final") => {
@@ -104,10 +86,11 @@ const getGradeLabel = (average: number) => {
   return "Yếu";
 };
 
-export function GradesTable({ grades }: GradesTableProps) {
-  const [selectedScores, setSelectedScores] = useState<SelectedScore[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+export function GradesTable({
+  grades,
+  selectedScores = [],
+  onScoreSelect,
+}: GradesTableProps) {
   const toggleScore = (
     subjectId: string,
     subjectName: string,
@@ -116,6 +99,8 @@ export function GradesTable({ grades }: GradesTableProps) {
     value: string,
     index: number
   ) => {
+    if (!onScoreSelect) return;
+
     const uniqueId = `${subjectId}-${type}-${index}`;
 
     // Kiểm tra xem điểm này đã gửi yêu cầu chưa hoặc bị từ chối
@@ -123,14 +108,27 @@ export function GradesTable({ grades }: GradesTableProps) {
       return; // Không cho phép chọn nếu đã gửi yêu cầu hoặc bị từ chối
     }
 
-    const isSelected = selectedScores.some((s) => s.uniqueId === uniqueId);
+    const isSelected = selectedScores.some((s) => s.id === uniqueId);
     if (isSelected) {
-      setSelectedScores((prev) => prev.filter((s) => s.uniqueId !== uniqueId));
+      onScoreSelect(selectedScores.filter((s) => s.id !== uniqueId));
     } else {
-      setSelectedScores((prev) => [
-        ...prev,
-        { uniqueId, subjectId, subjectName, teacherName, type, value },
-      ]);
+      const scoreItem: ScoreItem = {
+        id: uniqueId,
+        type: type.includes("Miệng")
+          ? "oral"
+          : type.includes("15")
+          ? "test15min"
+          : type.includes("1 tiết")
+          ? "test45min"
+          : type.includes("Giữa kỳ")
+          ? "midterm"
+          : "final",
+        label: `${subjectName} - ${type}`,
+        value: parseFloat(value),
+        subjectId,
+        subjectName,
+      };
+      onScoreSelect([...selectedScores, scoreItem]);
     }
   };
   const ScoreCell = ({
@@ -180,9 +178,7 @@ export function GradesTable({ grades }: GradesTableProps) {
       <div className="flex flex-wrap justify-center gap-1.5 min-w-20">
         {scoresArray.map((score, idx) => {
           const uniqueId = `${grade.subjectId}-${type}-${idx}`;
-          const isSelected = selectedScores.some(
-            (s) => s.uniqueId === uniqueId
-          );
+          const isSelected = selectedScores.some((s) => s.id === uniqueId);
           const isSubmitted = SUBMITTED_REQUESTS.has(uniqueId);
           const isRejected = REJECTED_REQUESTS.has(uniqueId);
 
@@ -266,108 +262,6 @@ export function GradesTable({ grades }: GradesTableProps) {
                 {getPhaseMessage()}
               </div>
             </div>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  disabled={selectedScores.length === 0}
-                  className={`transition-all duration-300 gap-2 ${
-                    selectedScores.length === 0
-                      ? "opacity-50 cursor-not-allowed bg-gray-200 text-gray-400"
-                      : "bg-primary text-white shadow-md hover:scale-105"
-                  }`}
-                >
-                  <Send className="w-4 h-4" />
-                  Gửi yêu cầu ({selectedScores.length})
-                </Button>
-              </DialogTrigger>
-
-              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-bold">
-                    Yêu cầu sửa điểm
-                  </DialogTitle>
-                  <DialogDescription>
-                    Vui lòng điền thông tin chi tiết cho{" "}
-                    <strong>{selectedScores.length}</strong> điểm đã chọn.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="mt-4 bg-gray-50 dark:bg-zinc-900/50 p-3 rounded-lg border border-gray-100 dark:border-zinc-800 max-h-[120px] overflow-y-auto space-y-2">
-                  {selectedScores.map((item) => (
-                    <div
-                      key={item.uniqueId}
-                      className="flex justify-between items-center text-sm p-2 bg-white dark:bg-zinc-800 rounded shadow-sm border border-gray-100 dark:border-zinc-700"
-                    >
-                      <div>
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">
-                          {item.subjectName}
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-2">
-                          ({item.teacherName})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px]">
-                          {item.type}
-                        </Badge>
-                        <span className="font-bold text-blue-600">
-                          {item.value}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid gap-5 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="score" className="text-sm font-semibold">
-                      Điểm đề xuất <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="score"
-                      placeholder="Nhập điểm bạn cho rằng đúng (0-10)"
-                      type="number"
-                      step="0.1"
-                      max={10}
-                      min={0}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="reason" className="text-sm font-semibold">
-                      Lý do <span className="text-red-500">*</span>
-                    </Label>
-                    <Textarea
-                      id="reason"
-                      placeholder="Mô tả chi tiết lý do..."
-                      className="h-24 resize-none"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-semibold">Minh chứng</Label>
-                    <div className="border-2 border-dashed border-gray-200 dark:border-zinc-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors">
-                      <UploadCloud className="w-5 h-5 text-blue-500" />
-                      <span className="text-xs text-gray-500 mt-2">
-                        Nhấn để tải ảnh
-                      </span>
-                      <Input type="file" className="hidden" />
-                    </div>
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Hủy
-                  </Button>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Gửi yêu cầu
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
           </div>
 
           {/* TABLE CONTENT */}

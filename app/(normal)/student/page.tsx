@@ -10,6 +10,7 @@ import { GradesOverview } from "@/components/section/student/grades-overview";
 import { GradesTable } from "@/components/section/student/grades-table";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,7 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { mockGrades } from "@/mork-data";
-import { Filter } from "lucide-react";
+import { Filter, FileEdit } from "lucide-react";
+import {
+  GradeEditRequestPopup,
+  type ScoreItem,
+} from "@/components/section/student/grade-edit-request-popup";
 
 export default function StudentPage() {
   const { user, isLoading, logout } = useAuth();
@@ -26,6 +31,8 @@ export default function StudentPage() {
   const [academicYear, setAcademicYear] = useState("2024-2025");
   const [semester, setSemester] = useState<1 | 2>(1);
   const [studentGrades, setStudentGrades] = useState(mockGrades);
+  const [selectedScores, setSelectedScores] = useState<ScoreItem[]>([]);
+  const [showEditPopup, setShowEditPopup] = useState(false);
 
   useEffect(() => {
     if (!isLoading && (!user || !isStudent(user))) {
@@ -58,11 +65,55 @@ export default function StudentPage() {
     role: user.role as "student",
   };
 
+  const handleOpenEditPopup = () => {
+    if (selectedScores.length === 0) {
+      alert("Vui lòng chọn ít nhất một điểm để sửa");
+      return;
+    }
+    setShowEditPopup(true);
+  };
+
+  const handleRemoveScore = (score: ScoreItem) => {
+    setSelectedScores((prev) => prev.filter((s) => s.id !== score.id));
+  };
+
   return (
     <>
       <Header user={headerUser} onLogout={logout} />
       <main className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
         <div className="container mx-auto px-4 py-6">
+          {/* Selected Scores Bar */}
+          {selectedScores.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-4 fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
+            >
+              <GlassCard padding="sm">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">
+                    Đã chọn {selectedScores.length} điểm
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={handleOpenEditPopup}
+                    className="gap-2"
+                  >
+                    <FileEdit className="h-4 w-4" />
+                    Gửi yêu cầu sửa điểm
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedScores([])}
+                  >
+                    Hủy chọn
+                  </Button>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
           {/* Filter Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -109,10 +160,22 @@ export default function StudentPage() {
           </motion.div>
 
           <GradesOverview grades={studentGrades} />
-          <GradesTable grades={studentGrades} />
+          <GradesTable
+            grades={studentGrades}
+            selectedScores={selectedScores}
+            onScoreSelect={setSelectedScores}
+          />
         </div>
       </main>
       <Footer />
+
+      {/* Edit Score Popup */}
+      <GradeEditRequestPopup
+        isOpen={showEditPopup}
+        onClose={() => setShowEditPopup(false)}
+        selectedScores={selectedScores}
+        onRemoveScore={handleRemoveScore}
+      />
     </>
   );
 }
