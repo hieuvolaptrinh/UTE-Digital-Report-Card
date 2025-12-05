@@ -1,15 +1,24 @@
 "use client";
 
 import { useAuth, isTeacher } from "@/lib/auth";
-import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { GlassCard } from "@/components/ui/glass-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 import {
   Table,
   TableBody,
@@ -19,36 +28,71 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { ArrowLeft, Eye, Download, User, BookOpen } from "lucide-react";
+  ArrowLeft,
+  Save,
+  Upload,
+  RotateCcw,
+  FileSpreadsheet,
+} from "lucide-react";
 import Link from "next/link";
-import { getStudentDetailsByClass, getGradesByClassAndSubject, StudentSubjectGrade } from "@/mork-data";
+import {
+  getStudentDetailsByClass,
+  getGradesByClassAndSubject,
+} from "@/mork-data";
+import { cn } from "@/lib/utils";
 
-export default function ClassDetailsPage() {
+export default function EnterGradesPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const className = decodeURIComponent(params.className as string);
+  // Luôn sử dụng lớp 10A1
+  const className = "10A1";
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const students = getStudentDetailsByClass(className);
-  const subjectName = "Toán học"; 
-  const grades = getGradesByClassAndSubject(className, subjectName);
+  const subjectName = "Toán học";
 
-  const [selectedStudent, setSelectedStudent] = useState<{
-    student: any;
-    grade: StudentSubjectGrade | undefined;
-    avg: string | null;
-  } | null>(null);
+  const [gradesData, setGradesData] = useState<
+    {
+      studentId: string;
+      oral: (number | null)[];
+      test15min: (number | null)[];
+      test45min: (number | null)[];
+      midterm: number | null;
+      final: number | null;
+    }[]
+  >([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Track original grades to detect changes
+  const [originalGrades, setOriginalGrades] = useState<
+    {
+      studentId: string;
+      oral: (number | null)[];
+      test15min: (number | null)[];
+      test45min: (number | null)[];
+      midterm: number | null;
+      final: number | null;
+    }[]
+  >([]);
+
+  // Track modified cells
+  const [modifiedCells, setModifiedCells] = useState<Set<string>>(new Set());
+
+  // Edit request dialog
+  const [showEditRequestDialog, setShowEditRequestDialog] = useState(false);
+  const [editReason, setEditReason] = useState("");
 
   useEffect(() => {
-    if (!isLoading && (!user || !isTeacher(user))) {
-      router.push("/login");
+    if (user && isTeacher(user)) {
+      const initialGrades = getGradesByClassAndSubject(className, subjectName);
+      const gradesCopy = JSON.parse(JSON.stringify(initialGrades));
+      setGradesData(gradesCopy);
+      setOriginalGrades(JSON.parse(JSON.stringify(initialGrades)));
     }
+  }, [user, className]);
+
+  useEffect(() => {
+    if (!isLoading && (!user || !isTeacher(user))) router.push("/login");
   }, [user, isLoading, router]);
 
   if (isLoading || !user || !isTeacher(user)) return null;
@@ -57,157 +101,415 @@ export default function ClassDetailsPage() {
     name: user.name,
     email: user.email,
     avatar: user.avatar,
-    role: user.role as any,
+    role: user.role as "teacher" | "academic-officer" | "principal",
   };
 
-  const getAverage = (studentId: string) => {
-    const g = grades.find((item) => item.studentId === studentId);
-    if (!g) return null;
-    
+  // --- LOGIC TÍNH TOÁN ---
+  const calculateTempAverage = (grade: {
+    oral: (number | null)[];
+    test15min: (number | null)[];
+    test45min: (number | null)[];
+    midterm: number | null;
+    final: number | null;
+  }) => {
     let total = 0;
     let weight = 0;
-    
-    if (g.oral.length) { total += g.oral.reduce((a, b) => a + b, 0); weight += g.oral.length; }
-    if (g.test15min.length) { total += g.test15min.reduce((a, b) => a + b, 0); weight += g.test15min.length; }
-    if (g.test45min.length) { total += g.test45min.reduce((a, b) => a + b, 0) * 2; weight += g.test45min.length * 2; }
-    if (g.midterm) { total += g.midterm * 2; weight += 2; }
-    if (g.final) { total += g.final * 3; weight += 3; }
-    
-    return weight > 0 ? (total / weight).toFixed(1) : null;
+
+    const sumArray = (arr: (number | null)[], coeff: number) => {
+      arr.forEach((s) => {
+        if (s !== null && s !== undefined) {
+          total += s * coeff;
+          weight += coeff;
+        }
+      });
+    };
+
+    if (grade.oral) sumArray(grade.oral, 1);
+    if (grade.test15min) sumArray(grade.test15min, 1);
+    if (grade.test45min) sumArray(grade.test45min, 2);
+
+    if (grade.midterm !== null) {
+      total += grade.midterm * 2;
+      weight += 2;
+    }
+    if (grade.final !== null) {
+      total += grade.final * 3;
+      weight += 3;
+    }
+    return weight > 0 ? (total / weight).toFixed(1) : "-";
   };
 
-  const handleExportExcel = () => {
-    const csvContent = "data:text/csv;charset=utf-8," 
-        + "STT,MaHS,HoTen,DiemMieng,15Phut,1Tiet,GiuaKy,CuoiKy,TBM\n"
-        + students.map((s, i) => {
-            const g = grades.find(x => x.studentId === s.studentId);
-            const avg = getAverage(s.studentId) || "";
-            const oral = g?.oral.join(' - ') || '';
-            const t15 = g?.test15min.join(' - ') || '';
-            const t45 = g?.test45min.join(' - ') || '';
-            return `${i+1},${s.studentId},${s.name},"${oral}","${t15}","${t45}",${g?.midterm || ''},${g?.final || ''},${avg}`;
-        }).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Bang_Diem_${className}_${subjectName}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const getCellKey = (
+    studentId: string,
+    field: string,
+    index: number | null
+  ) => {
+    return `${studentId}-${field}-${index}`;
+  };
+
+  const handleGradeChange = (
+    studentId: string,
+    field: string,
+    index: number | null,
+    value: string
+  ) => {
+    // Cho phép nhập các ký tự số và dấu chấm
+    if (value !== "" && !/^\d*\.?\d*$/.test(value)) return;
+
+    const numVal = parseFloat(value);
+    // Chỉ validate khi người dùng đã nhập xong (có giá trị hoàn chỉnh)
+    if (
+      value !== "" &&
+      value !== "." &&
+      !isNaN(numVal) &&
+      (numVal < 0 || numVal > 10)
+    )
+      return;
+
+    // Check if this is modifying an existing grade
+    const originalGrade = originalGrades.find((g) => g.studentId === studentId);
+    if (originalGrade) {
+      let originalValue: number | null = null;
+
+      if (index !== null) {
+        if (field === "oral") originalValue = originalGrade.oral[index] ?? null;
+        else if (field === "test15min")
+          originalValue = originalGrade.test15min[index] ?? null;
+        else if (field === "test45min")
+          originalValue = originalGrade.test45min[index] ?? null;
+      } else {
+        if (field === "midterm") originalValue = originalGrade.midterm;
+        else if (field === "final") originalValue = originalGrade.final;
+      }
+
+      const newValue = value === "" ? null : numVal;
+      const cellKey = getCellKey(studentId, field, index);
+
+      // If original had a value and we're changing it, mark as modified
+      if (originalValue !== null && originalValue !== newValue) {
+        setModifiedCells((prev) => new Set(prev).add(cellKey));
+      } else if (originalValue === newValue) {
+        setModifiedCells((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(cellKey);
+          return newSet;
+        });
+      }
+    }
+
+    setGradesData((prev) =>
+      prev.map((g) => {
+        if (g.studentId !== studentId) return g;
+        const newGrade = { ...g };
+        if (index !== null) {
+          // Xử lý cho các trường array (oral, test15min, test45min)
+          if (field === "oral") {
+            const newArr = [...newGrade.oral];
+            newArr[index] = value === "" ? null : numVal;
+            newGrade.oral = newArr;
+          } else if (field === "test15min") {
+            const newArr = [...newGrade.test15min];
+            newArr[index] = value === "" ? null : numVal;
+            newGrade.test15min = newArr;
+          } else if (field === "test45min") {
+            const newArr = [...newGrade.test45min];
+            newArr[index] = value === "" ? null : numVal;
+            newGrade.test45min = newArr;
+          }
+        } else {
+          // Xử lý cho midterm và final
+          if (field === "midterm") {
+            newGrade.midterm = value === "" ? null : numVal;
+          } else if (field === "final") {
+            newGrade.final = value === "" ? null : numVal;
+          }
+        }
+        return newGrade;
+      })
+    );
+  };
+
+  const handleSave = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      setIsSaving(false);
+      alert(`Đã lưu bảng điểm thành công!`);
+    }, 1000);
+  };
+
+  const handleSubmitEditRequest = () => {
+    if (!editReason.trim()) {
+      alert("Vui lòng nhập lý do sửa điểm!");
+      return;
+    }
+
+    console.log("Gửi yêu cầu sửa điểm:", {
+      modifiedCells: Array.from(modifiedCells),
+      reason: editReason,
+      changes: gradesData,
+    });
+
+    alert(`Đã gửi yêu cầu sửa điểm thành công!\nLý do: ${editReason}`);
+    setShowEditRequestDialog(false);
+    setEditReason("");
+    setModifiedCells(new Set());
+  };
+
+  // --- COMPONENTS ---
+  const GradeCell = ({
+    studentId,
+    field,
+    index,
+    value,
+    classNameInput,
+  }: {
+    studentId: string;
+    field: string;
+    index: number | null;
+    value: number | null;
+    classNameInput?: string;
+  }) => {
+    const cellKey = getCellKey(studentId, field, index);
+    const isModified = modifiedCells.has(cellKey);
+
+    return (
+      <Input
+        type="text"
+        inputMode="decimal"
+        className={cn(
+          "p-0 text-center text-sm transition-all duration-150",
+          classNameInput,
+          isModified && "bg-yellow-100 border-yellow-400 ring-2 ring-yellow-300"
+        )}
+        value={value ?? ""}
+        onChange={(e) =>
+          handleGradeChange(studentId, field, index, e.target.value)
+        }
+        placeholder="-"
+      />
+    );
   };
 
   return (
     <>
       <Header user={headerUser} onLogout={logout} />
-      <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <main className="min-h-screen bg-linear-to-br from-orange-50 via-white to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 pb-28">
         <div className="container mx-auto px-4 py-6">
-          
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"
-          >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-4">
-              <Link href="/teacher/classes">
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-black/5">
+              <Link href={`/teacher/class/${className}`}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full hover:bg-black/5"
+                >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold">Lớp {className}</h1>
-                <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                   <Badge variant="outline" className="gap-1 bg-white">
-                      <BookOpen className="h-3 w-3" /> {subjectName}
-                   </Badge>
-                   <span>• {students.length} học sinh</span>
+                <h1 className="text-2xl font-bold flex items-center gap-2">
+                  Nhập điểm: Lớp {className}
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge
+                    variant="outline"
+                    className="bg-white gap-1 font-normal"
+                  >
+                    <FileSpreadsheet className="h-3 w-3" /> {subjectName}
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-2">
-                <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={handleExportExcel}>
-                  <Download className="h-4 w-4" /> Xuất Excel
-                </Button>
-            </div>
-          </motion.div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    console.log("File selected:", e.target.files[0].name);
+                    // Xử lý file Excel ở đây
+                  }
+                }}
+              />
+              <Button
+                variant="outline"
+                className="gap-2 bg-white"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" /> Import Excel
+              </Button>
 
-          <GlassCard className="overflow-hidden">
-            <div className="overflow-x-auto">
+              {modifiedCells.size > 0 && (
+                <Button
+                  variant="outline"
+                  className="gap-2 bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                  onClick={() => setShowEditRequestDialog(true)}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Gửi yêu cầu sửa điểm ({modifiedCells.size})
+                </Button>
+              )}
+
+              <Button
+                className="gap-2 min-w-[120px] bg-primary hover:bg-primary/90 text-white"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <RotateCcw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}{" "}
+                Lưu điểm
+              </Button>
+            </div>
+          </div>
+
+          <GlassCard className="overflow-hidden min-h-[500px] mb-10 shadow-xl border-t border-white/50">
+            <div className="overflow-x-auto pb-4">
               <Table>
-                <TableHeader className="bg-muted/50">
+                <TableHeader className="bg-muted/30 sticky top-0 z-20 shadow-sm backdrop-blur-xl">
                   <TableRow>
-                    <TableHead className="w-[50px] text-center">STT</TableHead>
-                    <TableHead className="w-[250px]">Họ và tên</TableHead>
-                    <TableHead className="text-center">Miệng</TableHead>
-                    <TableHead className="text-center">15 phút</TableHead>
-                    <TableHead className="text-center">1 tiết</TableHead>
-                    <TableHead className="text-center w-[80px]">Giữa kỳ</TableHead>
-                    <TableHead className="text-center w-[80px]">Cuối kỳ</TableHead>
-                    <TableHead className="text-center w-[80px] font-bold text-primary">TBM</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
+                    <TableHead className="w-[50px] text-center bg-gray-50/90 backdrop-blur">
+                      STT
+                    </TableHead>
+                    <TableHead className="w-[200px] min-w-[180px] bg-gray-50/90 backdrop-blur">
+                      Họ và tên
+                    </TableHead>
+
+                    <TableHead className="text-center min-w-[140px] bg-gray-50/90 backdrop-blur p-2">
+                      <span className="font-semibold text-gray-700">
+                        Miệng (HS1)
+                      </span>
+                    </TableHead>
+
+                    <TableHead className="text-center min-w-[140px] bg-gray-50/90 backdrop-blur p-2">
+                      <span className="font-semibold text-gray-700">
+                        15 Phút (HS1)
+                      </span>
+                    </TableHead>
+
+                    <TableHead className="text-center min-w-[140px] bg-gray-50/90 backdrop-blur p-2">
+                      <span className="font-semibold text-gray-700">
+                        1 Tiết (HS2)
+                      </span>
+                    </TableHead>
+
+                    <TableHead className="text-center w-[100px] bg-gray-50/90 backdrop-blur text-orange-700 font-semibold p-2">
+                      <span>Giữa kỳ</span>
+                    </TableHead>
+
+                    <TableHead className="text-center w-[100px] bg-gray-50/90 backdrop-blur text-red-700 font-semibold p-2">
+                      <span>Cuối kỳ</span>
+                    </TableHead>
+
+                    <TableHead className="text-center w-20 bg-gray-50/90 backdrop-blur text-primary font-bold">
+                      TBM
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {students.map((student, index) => {
-                    const studentGrade = grades.find(g => g.studentId === student.studentId);
-                    const avg = getAverage(student.studentId);
+                    const grade = gradesData.find(
+                      (g) => g.studentId === student.studentId
+                    ) || {
+                      oral: [],
+                      test15min: [],
+                      test45min: [],
+                      midterm: null,
+                      final: null,
+                    };
+                    const avg = calculateTempAverage(grade);
 
                     return (
-                      <TableRow key={student.studentId} className="hover:bg-muted/20 transition-colors">
-                        <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
+                      <TableRow
+                        key={student.studentId}
+                        className="hover:bg-muted/10 group"
+                      >
+                        <TableCell className="text-center text-muted-foreground font-medium">
+                          {index + 1}
+                        </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                             <Avatar className="h-8 w-8 border border-border">
-                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.studentId}`} />
-                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
-                             </Avatar>
-                             <div className="flex flex-col">
-                                <span className="font-medium">{student.name}</span>
-                                <span className="text-xs text-muted-foreground">{student.studentId}</span>
-                             </div>
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {student.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {student.studentId}
                           </div>
                         </TableCell>
-                        
-                        <TableCell className="text-center">
-                           <div className="flex justify-center gap-1 flex-wrap max-w-[120px] mx-auto">
-                             {studentGrade?.oral.length ? studentGrade.oral.map((s, i) => (
-                               <Badge key={i} variant="secondary" className="px-1.5 py-0 text-xs font-normal border border-border bg-gray-50">{s}</Badge>
-                             )) : <span className="text-muted-foreground text-sm">-</span>}
-                           </div>
+
+                        <TableCell>
+                          <div className="flex gap-1 justify-center">
+                            {[0, 1, 2].map((i) => (
+                              <div key={i} className="w-10">
+                                <GradeCell
+                                  studentId={student.studentId}
+                                  field="oral"
+                                  index={i}
+                                  value={grade.oral[i]}
+                                  classNameInput="h-9 focus-visible:ring-1 focus-visible:border-primary"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                           <div className="flex justify-center gap-1 flex-wrap max-w-[120px] mx-auto">
-                             {studentGrade?.test15min.length ? studentGrade.test15min.map((s, i) => (
-                               <Badge key={i} variant="secondary" className="px-1.5 py-0 text-xs font-normal border border-blue-200 bg-blue-50 text-blue-700">{s}</Badge>
-                             )) : <span className="text-muted-foreground text-sm">-</span>}
-                           </div>
+                        <TableCell>
+                          <div className="flex gap-1 justify-center">
+                            {[0, 1, 2].map((i) => (
+                              <div key={i} className="w-10">
+                                <GradeCell
+                                  studentId={student.studentId}
+                                  field="test15min"
+                                  index={i}
+                                  value={grade.test15min[i]}
+                                  classNameInput="h-9 border-blue-200 focus-visible:ring-blue-500 bg-blue-50/30 focus:bg-white"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </TableCell>
-                         <TableCell className="text-center">
-                           <div className="flex justify-center gap-1 flex-wrap max-w-[120px] mx-auto">
-                             {studentGrade?.test45min.length ? studentGrade.test45min.map((s, i) => (
-                               <Badge key={i} variant="secondary" className="px-1.5 py-0 text-xs font-normal border border-purple-200 bg-purple-50 text-purple-700">{s}</Badge>
-                             )) : <span className="text-muted-foreground text-sm">-</span>}
-                           </div>
+                        <TableCell>
+                          <div className="flex gap-1 justify-center">
+                            {[0, 1].map((i) => (
+                              <div key={i} className="w-10">
+                                <GradeCell
+                                  studentId={student.studentId}
+                                  field="test45min"
+                                  index={i}
+                                  value={grade.test45min[i]}
+                                  classNameInput="h-9 border-purple-200 focus-visible:ring-purple-500 bg-purple-50/30 focus:bg-white"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center font-medium text-orange-600">
-                           {studentGrade?.midterm ?? "-"}
+                        <TableCell>
+                          <div className="flex justify-center w-14 mx-auto">
+                            <GradeCell
+                              studentId={student.studentId}
+                              field="midterm"
+                              index={null}
+                              value={grade.midterm}
+                              classNameInput="h-10 font-bold text-orange-600 border-orange-200 focus-visible:ring-orange-500 bg-orange-50/30 focus:bg-white"
+                            />
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center font-medium text-red-600">
-                           {studentGrade?.final ?? "-"}
+                        <TableCell>
+                          <div className="flex justify-center w-14 mx-auto">
+                            <GradeCell
+                              studentId={student.studentId}
+                              field="final"
+                              index={null}
+                              value={grade.final}
+                              classNameInput="h-10 font-bold text-red-600 border-red-200 focus-visible:ring-red-500 bg-red-50/30 focus:bg-white"
+                            />
+                          </div>
                         </TableCell>
                         <TableCell className="text-center font-bold text-primary text-base">
-                           {avg ?? "-"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                           <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-8 gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                              onClick={() => setSelectedStudent({ student, grade: studentGrade, avg })}
-                           >
-                              <Eye className="h-4 w-4" /> Chi tiết
-                           </Button>
+                          {avg}
                         </TableCell>
                       </TableRow>
                     );
@@ -217,94 +519,65 @@ export default function ClassDetailsPage() {
             </div>
           </GlassCard>
         </div>
-
-        <Dialog open={!!selectedStudent} onOpenChange={(open) => !open && setSelectedStudent(null)}>
-          <DialogContent className="max-w-md bg-white dark:bg-gray-900">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                 <User className="h-5 w-5 text-primary" />
-                 Bảng điểm chi tiết
-              </DialogTitle>
-              <DialogDescription>
-                Môn học: {subjectName}
-              </DialogDescription>
-            </DialogHeader>
-
-            {selectedStudent && (
-              <div className="space-y-6 pt-2">
-                <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-lg border border-border">
-                   <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedStudent.student.studentId}`} />
-                      <AvatarFallback>{selectedStudent.student.name.charAt(0)}</AvatarFallback>
-                   </Avatar>
-                   <div>
-                      <h3 className="font-bold text-lg">{selectedStudent.student.name}</h3>
-                      <p className="text-sm text-muted-foreground">{selectedStudent.student.studentId} • Lớp {className}</p>
-                      <Badge className="mt-2 bg-primary/10 text-primary hover:bg-primary/20 border-0">
-                        TB Môn: {selectedStudent.avg || "Chưa có"}
-                      </Badge>
-                   </div>
-                </div>
-
-                <div className="space-y-4">
-                   <div className="grid grid-cols-3 gap-2 pb-2 border-b text-sm font-semibold text-muted-foreground">
-                      <div>Loại điểm</div>
-                      <div className="text-center">Hệ số</div>
-                      <div className="text-right">Điểm số</div>
-                   </div>
-                   
-                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
-                      <div>Điểm Miệng</div>
-                      <div className="text-center text-muted-foreground">1</div>
-                      <div className="text-right flex justify-end gap-1 flex-wrap">
-                        {selectedStudent.grade?.oral.length ? selectedStudent.grade.oral.map((s,i) => (
-                           <Badge key={i} variant="outline" className="font-mono bg-gray-50">{s}</Badge>
-                        )) : <span className="text-muted-foreground">-</span>}
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
-                      <div>15 Phút</div>
-                      <div className="text-center text-muted-foreground">1</div>
-                      <div className="text-right flex justify-end gap-1 flex-wrap">
-                        {selectedStudent.grade?.test15min.length ? selectedStudent.grade.test15min.map((s,i) => (
-                           <Badge key={i} variant="outline" className="font-mono border-blue-200 text-blue-700 bg-blue-50">{s}</Badge>
-                        )) : <span className="text-muted-foreground">-</span>}
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
-                      <div>1 Tiết</div>
-                      <div className="text-center text-muted-foreground">2</div>
-                      <div className="text-right flex justify-end gap-1 flex-wrap">
-                        {selectedStudent.grade?.test45min.length ? selectedStudent.grade.test45min.map((s,i) => (
-                           <Badge key={i} variant="outline" className="font-mono border-purple-200 text-purple-700 bg-purple-50">{s}</Badge>
-                        )) : <span className="text-muted-foreground">-</span>}
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
-                      <div>Giữa kỳ</div>
-                      <div className="text-center text-muted-foreground">2</div>
-                      <div className="text-right font-bold text-orange-600 text-base">
-                        {selectedStudent.grade?.midterm ?? "-"}
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
-                      <div>Cuối kỳ</div>
-                      <div className="text-center text-muted-foreground">3</div>
-                      <div className="text-right font-bold text-red-600 text-base">
-                        {selectedStudent.grade?.final ?? "-"}
-                      </div>
-                   </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
       </main>
+
+      {/* Dialog yêu cầu sửa điểm */}
+      <Dialog
+        open={showEditRequestDialog}
+        onOpenChange={setShowEditRequestDialog}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Gửi yêu cầu sửa điểm</DialogTitle>
+            <DialogDescription>
+              Bạn đã chỉnh sửa {modifiedCells.size} ô điểm. Vui lòng nhập lý do
+              để gửi yêu cầu sửa điểm.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Lý do sửa điểm <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                placeholder="Ví dụ: Nhập nhầm điểm, cần cập nhật điểm sau khi chấm lại bài kiểm tra..."
+                value={editReason}
+                onChange={(e) => setEditReason(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+
+            <div className="text-sm text-muted-foreground bg-yellow-50 border border-yellow-200 rounded-md p-3">
+              <p className="font-medium text-yellow-800 mb-1">Lưu ý:</p>
+              <ul className="list-disc list-inside space-y-1 text-yellow-700">
+                <li>Yêu cầu sẽ được gửi đến cán bộ giáo vụ để phê duyệt</li>
+                <li>Các ô điểm đã sửa sẽ được đánh dấu màu vàng</li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEditRequestDialog(false);
+                setEditReason("");
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSubmitEditRequest}
+              disabled={!editReason.trim()}
+            >
+              Gửi yêu cầu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </>
   );

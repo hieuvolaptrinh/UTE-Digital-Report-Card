@@ -30,14 +30,17 @@ export default function StudentGradePage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const className = decodeURIComponent(params.className as string);
-  // Hardcode studentId to always be 2024001
-  const studentId = "2024001";
+  // Luôn sử dụng lớp 10A1
+  const className = "10A1";
+  // Lấy studentId từ params
+  const studentId = decodeURIComponent(params.studentId as string);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [studentGrades, setStudentGrades] =
     useState<StudentSubjectGrade | null>(null);
+  const [comment, setComment] = useState<string>("");
+  const [isSavingComment, setIsSavingComment] = useState(false);
 
   const students = getStudentDetailsByClass(className);
   const student = students.find((s) => s.studentId === studentId);
@@ -385,6 +388,96 @@ export default function StudentGradePage() {
               )}
             </motion.div>
           </div>
+
+          {/* Student Comment Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-6"
+          >
+            <GlassCard padding="lg">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Edit className="h-5 w-5 text-primary" />
+                  Nhận xét học sinh
+                </h2>
+                <Button
+                  onClick={() => {
+                    setIsSavingComment(true);
+                    // Simulate saving
+                    setTimeout(() => {
+                      setIsSavingComment(false);
+                      setSaved(true);
+                      setTimeout(() => setSaved(false), 2000);
+                    }, 500);
+                  }}
+                  disabled={isSavingComment}
+                  size="sm"
+                >
+                  {isSavingComment ? (
+                    <>Đang lưu...</>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Lưu nhận xét
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Nhận xét về học lực và thái độ học tập
+                  </label>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Nhập nhận xét chi tiết về học sinh: điểm mạnh, điểm yếu, thái độ học tập, khả năng tiếp thu kiến thức..."
+                    className="w-full min-h-[150px] p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent resize-y"
+                    rows={6}
+                  />
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {comment.length}/500 ký tự
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                    Gợi ý nhận xét:
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {[
+                      "Học sinh học tập chăm chỉ, có tinh thần trách nhiệm cao",
+                      "Cần cố gắng hơn trong việc hoàn thành bài tập về nhà",
+                      "Tích cực tham gia phát biểu trong giờ học",
+                      "Có khả năng tiếp thu kiến thức tốt, cần rèn luyện thêm kỹ năng làm bài",
+                      "Thái độ học tập nghiêm túc, luôn đi học đúng giờ",
+                      "Cần chú ý lắng nghe bài giảng trong lớp hơn",
+                    ].map((suggestion, idx) => (
+                      <Button
+                        key={idx}
+                        variant="outline"
+                        size="sm"
+                        className="justify-start text-left h-auto py-2 px-3 hover:bg-primary/5"
+                        onClick={() => {
+                          const newComment = comment
+                            ? `${comment}\n${suggestion}`
+                            : suggestion;
+                          setComment(newComment.slice(0, 500));
+                        }}
+                      >
+                        <span className="text-xs line-clamp-2">
+                          {suggestion}
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
         </div>
       </main>
 
