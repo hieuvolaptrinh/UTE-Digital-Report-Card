@@ -433,12 +433,17 @@ export default function EnterGradesPage() {
                           {index + 1}
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">
-                            {student.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {student.studentId}
-                          </div>
+                          <Link
+                            href={`/teacher/class/${className}/${student.studentId}`}
+                            className="block hover:bg-primary/5 rounded-md p-1 -m-1 transition-colors"
+                          >
+                            <div className="font-medium text-gray-900 dark:text-gray-100 hover:text-primary transition-colors">
+                              {student.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {student.studentId}
+                            </div>
+                          </Link>
                         </TableCell>
 
                         <TableCell>
