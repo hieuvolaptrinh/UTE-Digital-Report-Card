@@ -4,8 +4,6 @@ import { useAuth, isTeacher } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Header } from "@/components/layout/header";
-import { TeacherSidebar } from "@/components/layout/teacher/sidebar";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,7 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Filter, FileText, Eye, Check, X, CheckSquare } from "lucide-react";
+import { Filter, FileText, Eye, Check, X } from "lucide-react";
 
 interface LeaveRequest {
   id: string;
@@ -113,7 +111,7 @@ const HARDCODED_LEAVE_REQUESTS: LeaveRequest[] = [
 ];
 
 export default function TeacherLeaveRequestsPage() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const [sortBy, setSortBy] = useState<"date-asc" | "date-desc">("date-desc");
   const [filterClass, setFilterClass] = useState("all");
@@ -143,7 +141,7 @@ export default function TeacherLeaveRequestsPage() {
 
   // Filter and sort requests
   const filteredRequests = useMemo(() => {
-    let filtered = requestsList; // Sử dụng state requestsList thay vì hằng số
+    let filtered = requestsList;
 
     // Filter by class
     if (filterClass !== "all") {
@@ -200,13 +198,11 @@ export default function TeacherLeaveRequestsPage() {
     setProcessingId("BULK");
     
     setTimeout(() => {
-        // Cập nhật lại danh sách (Giả lập: Xóa các đơn đã xử lý khỏi danh sách hiển thị)
-        // Trong thực tế, bạn sẽ gọi API cập nhật trạng thái
         setRequestsList(prev => prev.filter(r => !selectedIds.includes(r.id)));
         
         setSelectedIds([]);
         setProcessingId(null);
-        setDialogOpen(false); // Đóng dialog nếu đang mở
+        setDialogOpen(false);
         
         alert(`Đã ${action === "APPROVE" ? "duyệt" : "từ chối"} ${selectedIds.length} đơn xin phép!`);
     }, 800);
@@ -239,292 +235,279 @@ export default function TeacherLeaveRequestsPage() {
     );
   }
 
-  const headerUser = {
-    name: user.name,
-    email: user.email,
-    avatar: user.avatar,
-    role: user.role as "teacher" | "principal",
-  };
-
   return (
-    <>
-      <Header user={headerUser} onLogout={logout} />
-      <div className="flex">
-        <TeacherSidebar user={headerUser} onLogout={logout} />
-        <main className="flex-1 lg:ml-80 min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-          <div className="container mx-auto px-4 py-6 mt-16 lg:mt-0 relative">
-            
-            {/* Header */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <FileText className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold">Đơn xin vắng học</h1>
-                  <p className="text-muted-foreground mt-1">
-                    Quản lý đơn xin nghỉ phép từ phụ huynh
-                  </p>
-                </div>
-                {newRequestsCount > 0 && (
-                  <Badge variant="destructive" className="h-fit">
-                    {newRequestsCount} mới
-                  </Badge>
-                )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="container mx-auto px-4 py-6 relative">
+        
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 rounded-lg bg-primary/10">
+              <FileText className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold">Đơn xin vắng học</h1>
+              <p className="text-muted-foreground mt-1">
+                Quản lý đơn xin nghỉ phép từ phụ huynh
+              </p>
+            </div>
+            {newRequestsCount > 0 && (
+              <Badge variant="destructive" className="h-fit">
+                {newRequestsCount} mới
+              </Badge>
+            )}
+          </div>
+        </motion.div>
+
+        {/* THANH CÔNG CỤ HÀNG LOẠT (NỔI) */}
+        <AnimatePresence>
+            {selectedIds.length > 0 && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="sticky top-4 z-20 mx-auto w-full max-w-3xl mb-6"
+                >
+                    <GlassCard className="p-3 shadow-xl border-primary/20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md flex items-center justify-between">
+                        <div className="flex items-center gap-3 px-2">
+                            <div className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md">
+                                {selectedIds.length}
+                            </div>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">đơn đã chọn</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                size="sm" 
+                                variant="destructive" 
+                                onClick={() => handleBulkAction("REJECT")}
+                                disabled={!!processingId}
+                                className="h-8"
+                            >
+                                <X className="h-4 w-4 mr-1.5" /> Từ chối
+                            </Button>
+                            <Button 
+                                size="sm" 
+                                className="bg-green-600 hover:bg-green-700 text-white h-8"
+                                onClick={() => handleBulkAction("APPROVE")}
+                                disabled={!!processingId}
+                            >
+                                <Check className="h-4 w-4 mr-1.5" /> Duyệt
+                            </Button>
+                        </div>
+                    </GlassCard>
+                </motion.div>
+            )}
+        </AnimatePresence>
+
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6"
+        >
+          <GlassCard padding="md">
+            <div className="text-sm text-muted-foreground">Tổng đơn</div>
+            <div className="text-2xl font-bold mt-2">{requestsList.length}</div>
+          </GlassCard>
+          <GlassCard padding="md">
+            <div className="text-sm text-muted-foreground">Đơn mới</div>
+            <div className="text-2xl font-bold mt-2 text-destructive">{newRequestsCount}</div>
+          </GlassCard>
+          <GlassCard padding="md">
+            <div className="text-sm text-muted-foreground">Đã xem xét</div>
+            <div className="text-2xl font-bold mt-2">{requestsList.filter((r) => !r.isNew).length}</div>
+          </GlassCard>
+          <GlassCard padding="md">
+            <div className="text-sm text-muted-foreground">Học sinh</div>
+            <div className="text-2xl font-bold mt-2">
+              {new Set(requestsList.map((r) => r.studentId)).size}
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-6"
+        >
+          <GlassCard padding="md">
+            <div className="flex items-center gap-3 mb-4">
+              <Filter className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Tìm kiếm & Lọc</h3>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="search">Tìm kiếm</Label>
+                <Input
+                  id="search"
+                  placeholder="Tên học sinh, phụ huynh, MSSV..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-            </motion.div>
+              <div className="space-y-2">
+                <Label htmlFor="class-filter">Lớp</Label>
+                <Select value={filterClass} onValueChange={setFilterClass}>
+                  <SelectTrigger id="class-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả lớp</SelectItem>
+                    {uniqueClasses.map((className) => (
+                      <SelectItem key={className} value={className}>
+                        {className}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status-filter">Trạng thái</Label>
+                <Select
+                  value={filterStatus}
+                  onValueChange={(value) => setFilterStatus(value as "all" | "new" | "viewed")}
+                >
+                  <SelectTrigger id="status-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="new">Mới</SelectItem>
+                    <SelectItem value="viewed">Đã xem</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sort">Sắp xếp</Label>
+                <Select
+                  value={sortBy}
+                  onValueChange={(value) => setSortBy(value as "date-asc" | "date-desc")}
+                >
+                  <SelectTrigger id="sort">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc">Mới nhất trước</SelectItem>
+                    <SelectItem value="date-asc">Cũ nhất trước</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
 
-            {/* THANH CÔNG CỤ HÀNG LOẠT (NỔI) */}
-            <AnimatePresence>
-                {selectedIds.length > 0 && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="sticky top-4 z-20 mx-auto w-full max-w-3xl mb-6"
-                    >
-                        <GlassCard className="p-3 shadow-xl border-primary/20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md flex items-center justify-between">
-                            <div className="flex items-center gap-3 px-2">
-                                <div className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md">
-                                    {selectedIds.length}
-                                </div>
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">đơn đã chọn</span>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                                <Button 
-                                    size="sm" 
-                                    variant="destructive" 
-                                    onClick={() => handleBulkAction("REJECT")}
-                                    disabled={!!processingId}
-                                    className="h-8"
-                                >
-                                    <X className="h-4 w-4 mr-1.5" /> Từ chối
-                                </Button>
-                                <Button 
-                                    size="sm" 
-                                    className="bg-green-600 hover:bg-green-700 text-white h-8"
-                                    onClick={() => handleBulkAction("APPROVE")}
-                                    disabled={!!processingId}
-                                >
-                                    <Check className="h-4 w-4 mr-1.5" /> Duyệt
-                                </Button>
-                            </div>
-                        </GlassCard>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6"
-            >
-              <GlassCard padding="md">
-                <div className="text-sm text-muted-foreground">Tổng đơn</div>
-                <div className="text-2xl font-bold mt-2">{requestsList.length}</div>
-              </GlassCard>
-              <GlassCard padding="md">
-                <div className="text-sm text-muted-foreground">Đơn mới</div>
-                <div className="text-2xl font-bold mt-2 text-destructive">{newRequestsCount}</div>
-              </GlassCard>
-              <GlassCard padding="md">
-                <div className="text-sm text-muted-foreground">Đã xem xét</div>
-                <div className="text-2xl font-bold mt-2">{requestsList.filter((r) => !r.isNew).length}</div>
-              </GlassCard>
-              <GlassCard padding="md">
-                <div className="text-sm text-muted-foreground">Học sinh</div>
-                <div className="text-2xl font-bold mt-2">
-                  {new Set(requestsList.map((r) => r.studentId)).size}
-                </div>
-              </GlassCard>
-            </motion.div>
-
-            {/* Filters */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mb-6"
-            >
-              <GlassCard padding="md">
-                <div className="flex items-center gap-3 mb-4">
-                  <Filter className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Tìm kiếm & Lọc</h3>
-                </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="search">Tìm kiếm</Label>
-                    <Input
-                      id="search"
-                      placeholder="Tên học sinh, phụ huynh, MSSV..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="class-filter">Lớp</Label>
-                    <Select value={filterClass} onValueChange={setFilterClass}>
-                      <SelectTrigger id="class-filter">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả lớp</SelectItem>
-                        {uniqueClasses.map((className) => (
-                          <SelectItem key={className} value={className}>
-                            {className}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="status-filter">Trạng thái</Label>
-                    <Select
-                      value={filterStatus}
-                      onValueChange={(value) => setFilterStatus(value as "all" | "new" | "viewed")}
-                    >
-                      <SelectTrigger id="status-filter">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả</SelectItem>
-                        <SelectItem value="new">Mới</SelectItem>
-                        <SelectItem value="viewed">Đã xem</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sort">Sắp xếp</Label>
-                    <Select
-                      value={sortBy}
-                      onValueChange={(value) => setSortBy(value as "date-asc" | "date-desc")}
-                    >
-                      <SelectTrigger id="sort">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date-desc">Mới nhất trước</SelectItem>
-                        <SelectItem value="date-asc">Cũ nhất trước</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </GlassCard>
-            </motion.div>
-
-            {/* Table */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <GlassCard padding="md">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {/* Checkbox Header */}
-                        <TableHead className="w-[50px] text-center">
+        {/* Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <GlassCard padding="md">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {/* Checkbox Header */}
+                    <TableHead className="w-[50px] text-center">
+                        <input 
+                            type="checkbox" 
+                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                            checked={selectedIds.length === filteredRequests.length && filteredRequests.length > 0}
+                            onChange={toggleSelectAll}
+                        />
+                    </TableHead>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Học sinh</TableHead>
+                    <TableHead>Phụ huynh</TableHead>
+                    <TableHead>Lớp</TableHead>
+                    <TableHead className="text-right">Ngày xin</TableHead>
+                    <TableHead>Lý do</TableHead>
+                    <TableHead className="text-center">Thời gian</TableHead>
+                    <TableHead className="text-right">Hành động</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRequests.length > 0 ? (
+                    filteredRequests.map((request) => (
+                      <TableRow key={request.id} className={selectedIds.includes(request.id) ? "bg-primary/5" : ""}>
+                        {/* Checkbox Row */}
+                        <TableCell className="text-center">
                             <input 
                                 type="checkbox" 
                                 className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
-                                checked={selectedIds.length === filteredRequests.length && filteredRequests.length > 0}
-                                onChange={toggleSelectAll}
+                                checked={selectedIds.includes(request.id)}
+                                onChange={() => toggleSelectOne(request.id)}
                             />
-                        </TableHead>
-                        <TableHead className="w-12"></TableHead>
-                        <TableHead>Học sinh</TableHead>
-                        <TableHead>Phụ huynh</TableHead>
-                        <TableHead>Lớp</TableHead>
-                        <TableHead className="text-right">Ngày xin</TableHead>
-                        <TableHead>Lý do</TableHead>
-                        <TableHead className="text-center">Thời gian</TableHead>
-                        <TableHead className="text-right">Hành động</TableHead>
+                        </TableCell>
+                        <TableCell>
+                          {request.isNew && (
+                            <Badge variant="destructive" className="h-6 w-6 rounded-full flex items-center justify-center p-0 text-xs">
+                              N
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {request.studentName}
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {request.studentId}
+                          </div>
+                        </TableCell>
+                        <TableCell>{request.parentName}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{request.class}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatDate(request.submittedDate)}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {request.reason}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="text-sm">
+                            {getDaysCount(request.fromDate, request.toDate)} ngày
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatDate(request.fromDate)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setDialogOpen(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                            Chi tiết
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredRequests.length > 0 ? (
-                        filteredRequests.map((request) => (
-                          <TableRow key={request.id} className={selectedIds.includes(request.id) ? "bg-primary/5" : ""}>
-                            {/* Checkbox Row */}
-                            <TableCell className="text-center">
-                                <input 
-                                    type="checkbox" 
-                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
-                                    checked={selectedIds.includes(request.id)}
-                                    onChange={() => toggleSelectOne(request.id)}
-                                />
-                            </TableCell>
-                            <TableCell>
-                              {request.isNew && (
-                                <Badge variant="destructive" className="h-6 w-6 rounded-full flex items-center justify-center p-0 text-xs">
-                                  N
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {request.studentName}
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {request.studentId}
-                              </div>
-                            </TableCell>
-                            <TableCell>{request.parentName}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{request.class}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatDate(request.submittedDate)}
-                            </TableCell>
-                            <TableCell className="max-w-xs truncate">
-                              {request.reason}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <div className="text-sm">
-                                {getDaysCount(request.fromDate, request.toDate)} ngày
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {formatDate(request.fromDate)}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="gap-2"
-                                onClick={() => {
-                                  setSelectedRequest(request);
-                                  setDialogOpen(true);
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                                Chi tiết
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={9} className="text-center py-8">
-                            <div className="text-muted-foreground">
-                              Không có đơn xin vắng học
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </GlassCard>
-            </motion.div>
-          </div>
-        </main>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8">
+                        <div className="text-muted-foreground">
+                          Không có đơn xin vắng học
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </GlassCard>
+        </motion.div>
       </div>
 
       {/* Detail Dialog */}
@@ -595,7 +578,6 @@ export default function TeacherLeaveRequestsPage() {
                     variant="destructive" 
                     className="flex-1"
                     onClick={() => {
-                        // Xử lý từ chối riêng lẻ (tái sử dụng logic Bulk với 1 ID)
                         setSelectedIds([selectedRequest.id]);
                         handleBulkAction("REJECT");
                     }}
@@ -605,7 +587,6 @@ export default function TeacherLeaveRequestsPage() {
                   <Button 
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={() => {
-                        // Xử lý duyệt riêng lẻ
                         setSelectedIds([selectedRequest.id]);
                         handleBulkAction("APPROVE");
                     }}
@@ -618,6 +599,6 @@ export default function TeacherLeaveRequestsPage() {
           </DialogDescription>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
