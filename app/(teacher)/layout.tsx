@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { Header } from "@/components/layout/header";
 import { TeacherSidebar } from "@/components/layout/teacher/sidebar";
 import type { TeacherUser } from "@/components/layout/teacher/sidebar";
 import { useAuth, isTeacher } from "@/lib/auth";
@@ -49,12 +50,23 @@ export default function TeacherLayout({
     classes: user.classes,
   };
 
+  // Header user format
+  const headerUser = {
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    role: user.role as "teacher" | "principal",
+  };
+
   return (
-    <div className="flex min-h-screen">
-      <TeacherSidebar user={teacherUser} onLogout={handleLogout} />
-      <main className="flex-1 lg:ml-[280px] pt-16 lg:pt-0">
-        <div className="h-full bg-background">{children}</div>
-      </main>
-    </div>
+    <>
+
+      <div className="flex min-h-screen">
+        <TeacherSidebar user={teacherUser} onLogout={handleLogout} />
+        <main className="flex-1 lg:ml-[280px] pt-16 lg:pt-0">
+          <div className="h-full bg-background">{children}</div>
+        </main>
+      </div>
+    </>
   );
 }
