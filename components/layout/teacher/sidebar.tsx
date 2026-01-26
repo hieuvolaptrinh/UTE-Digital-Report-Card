@@ -174,6 +174,12 @@ const getSidebarItems = (role: TeacherRole): SidebarItem[] => {
           icon: MessageSquare,
           roles: ["academic-officer"],
         },
+        {
+          label: "Điều chỉnh môn học",
+          href: "/academic-officer/mon-hoc",
+          icon: MessageSquare,
+          roles: ["academic-officer"],
+        },
       ],
     },
   ];
@@ -262,7 +268,7 @@ function SidebarNav({
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                     active
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
@@ -280,7 +286,7 @@ function SidebarNav({
                       <ChevronRight
                         className={cn(
                           "h-4 w-4 transition-transform",
-                          isExpanded && "rotate-90"
+                          isExpanded && "rotate-90",
                         )}
                       />
                     </>
@@ -304,7 +310,7 @@ function SidebarNav({
                                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",
                                 isActive(child.href)
                                   ? "bg-primary/10 text-primary font-medium"
-                                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
                               )}
                             >
                               <child.icon className="h-4 w-4 shrink-0" />
@@ -325,7 +331,7 @@ function SidebarNav({
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                     active
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
@@ -368,7 +374,7 @@ export function TeacherSidebar({
     setExpandedItems((prev) =>
       prev.includes(href)
         ? prev.filter((item) => item !== href)
-        : [...prev, href]
+        : [...prev, href],
     );
   };
 
@@ -443,8 +449,8 @@ export function TeacherSidebar({
                 {user.role === "principal"
                   ? "Hiệu trưởng"
                   : user.role === "academic-officer"
-                  ? "GVCN"
-                  : "Giáo viên"}
+                    ? "GVCN"
+                    : "Giáo viên"}
               </Badge>
             </div>
           )}
@@ -470,7 +476,7 @@ export function TeacherSidebar({
             variant="ghost"
             className={cn(
               "w-full justify-start gap-3",
-              collapsed && !mobileOpen && "justify-center px-0"
+              collapsed && !mobileOpen && "justify-center px-0",
             )}
           >
             <Settings className="h-5 w-5 shrink-0" />
@@ -481,7 +487,7 @@ export function TeacherSidebar({
           variant="ghost"
           className={cn(
             "w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10",
-            collapsed && !mobileOpen && "justify-center px-0"
+            collapsed && !mobileOpen && "justify-center px-0",
           )}
           onClick={onLogout}
         >
@@ -501,7 +507,7 @@ export function TeacherSidebar({
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
           "hidden lg:flex fixed left-0 top-0 h-screen flex-col bg-background/80 backdrop-blur-[6px] border-r border-border/40 z-40",
-          className
+          className,
         )}
       >
         {renderSidebarContent()}
